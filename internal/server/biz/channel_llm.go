@@ -158,6 +158,19 @@ func getProxyConfig(channelSettings *objects.ChannelSettings) *objects.ProxyConf
 	return channelSettings.Proxy
 }
 
+// buildChannelWithTransformer is a helper function to build a Channel with the given transformer.
+func buildChannelWithTransformer(
+	c *ent.Channel,
+	transformer transformer.Outbound,
+	httpClient *httpclient.HttpClient,
+) *Channel {
+	return &Channel{
+		Channel:    c,
+		Outbound:   transformer,
+		HTTPClient: httpClient,
+	}
+}
+
 //nolint:maintidx // Simple switch statement.
 func (svc *ChannelService) buildChannel(c *ent.Channel) (*Channel, error) {
 	httpClient := httpclient.NewHttpClientWithProxy(getProxyConfig(c.Settings))
@@ -173,44 +186,28 @@ func (svc *ChannelService) buildChannel(c *ent.Channel) (*Channel, error) {
 			return nil, fmt.Errorf("failed to create outbound transformer: %w", err)
 		}
 
-		return &Channel{
-			Channel:    c,
-			Outbound:   transformer,
-			HTTPClient: httpClient,
-		}, nil
+		return buildChannelWithTransformer(c, transformer, httpClient), nil
 	case channel.TypeOpenrouter:
 		transformer, err := openrouter.NewOutboundTransformer(c.BaseURL, c.Credentials.APIKey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create outbound transformer: %w", err)
 		}
 
-		return &Channel{
-			Channel:    c,
-			Outbound:   transformer,
-			HTTPClient: httpClient,
-		}, nil
+		return buildChannelWithTransformer(c, transformer, httpClient), nil
 	case channel.TypeZai, channel.TypeZhipu:
 		transformer, err := zai.NewOutboundTransformer(c.BaseURL, c.Credentials.APIKey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create outbound transformer: %w", err)
 		}
 
-		return &Channel{
-			Channel:    c,
-			Outbound:   transformer,
-			HTTPClient: httpClient,
-		}, nil
+		return buildChannelWithTransformer(c, transformer, httpClient), nil
 	case channel.TypeXai:
 		transformer, err := xai.NewOutboundTransformer(c.BaseURL, c.Credentials.APIKey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create outbound transformer: %w", err)
 		}
 
-		return &Channel{
-			Channel:    c,
-			Outbound:   transformer,
-			HTTPClient: httpClient,
-		}, nil
+		return buildChannelWithTransformer(c, transformer, httpClient), nil
 	case channel.TypeLongcatAnthropic:
 		transformer, err := anthropic.NewOutboundTransformerWithConfig(&anthropic.Config{
 			Type:    anthropic.PlatformLongCat,
@@ -221,11 +218,7 @@ func (svc *ChannelService) buildChannel(c *ent.Channel) (*Channel, error) {
 			return nil, fmt.Errorf("failed to create outbound transformer: %w", err)
 		}
 
-		return &Channel{
-			Channel:    c,
-			Outbound:   transformer,
-			HTTPClient: httpClient,
-		}, nil
+		return buildChannelWithTransformer(c, transformer, httpClient), nil
 	case channel.TypeAnthropic, channel.TypeMinimaxAnthropic:
 		transformer, err := anthropic.NewOutboundTransformerWithConfig(&anthropic.Config{
 			Type:    anthropic.PlatformDirect,
@@ -236,11 +229,7 @@ func (svc *ChannelService) buildChannel(c *ent.Channel) (*Channel, error) {
 			return nil, fmt.Errorf("failed to create outbound transformer: %w", err)
 		}
 
-		return &Channel{
-			Channel:    c,
-			Outbound:   transformer,
-			HTTPClient: httpClient,
-		}, nil
+		return buildChannelWithTransformer(c, transformer, httpClient), nil
 	case channel.TypeDeepseekAnthropic:
 		transformer, err := anthropic.NewOutboundTransformerWithConfig(&anthropic.Config{
 			Type:    anthropic.PlatformDeepSeek,
@@ -251,11 +240,7 @@ func (svc *ChannelService) buildChannel(c *ent.Channel) (*Channel, error) {
 			return nil, fmt.Errorf("failed to create outbound transformer: %w", err)
 		}
 
-		return &Channel{
-			Channel:    c,
-			Outbound:   transformer,
-			HTTPClient: httpClient,
-		}, nil
+		return buildChannelWithTransformer(c, transformer, httpClient), nil
 	case channel.TypeDoubaoAnthropic:
 		transformer, err := anthropic.NewOutboundTransformerWithConfig(&anthropic.Config{
 			Type:    anthropic.PlatformDoubao,
@@ -266,11 +251,7 @@ func (svc *ChannelService) buildChannel(c *ent.Channel) (*Channel, error) {
 			return nil, fmt.Errorf("failed to create outbound transformer: %w", err)
 		}
 
-		return &Channel{
-			Channel:    c,
-			Outbound:   transformer,
-			HTTPClient: httpClient,
-		}, nil
+		return buildChannelWithTransformer(c, transformer, httpClient), nil
 	case channel.TypeMoonshotAnthropic:
 		transformer, err := anthropic.NewOutboundTransformerWithConfig(&anthropic.Config{
 			Type:    anthropic.PlatformMoonshot,
@@ -281,11 +262,7 @@ func (svc *ChannelService) buildChannel(c *ent.Channel) (*Channel, error) {
 			return nil, fmt.Errorf("failed to create outbound transformer: %w", err)
 		}
 
-		return &Channel{
-			Channel:    c,
-			Outbound:   transformer,
-			HTTPClient: httpClient,
-		}, nil
+		return buildChannelWithTransformer(c, transformer, httpClient), nil
 	case channel.TypeZhipuAnthropic:
 		transformer, err := anthropic.NewOutboundTransformerWithConfig(&anthropic.Config{
 			Type:    anthropic.PlatformZhipu,
@@ -296,11 +273,7 @@ func (svc *ChannelService) buildChannel(c *ent.Channel) (*Channel, error) {
 			return nil, fmt.Errorf("failed to create outbound transformer: %w", err)
 		}
 
-		return &Channel{
-			Channel:    c,
-			Outbound:   transformer,
-			HTTPClient: httpClient,
-		}, nil
+		return buildChannelWithTransformer(c, transformer, httpClient), nil
 	case channel.TypeZaiAnthropic:
 		transformer, err := anthropic.NewOutboundTransformerWithConfig(&anthropic.Config{
 			Type:    anthropic.PlatformZai,
@@ -311,11 +284,7 @@ func (svc *ChannelService) buildChannel(c *ent.Channel) (*Channel, error) {
 			return nil, fmt.Errorf("failed to create outbound transformer: %w", err)
 		}
 
-		return &Channel{
-			Channel:    c,
-			Outbound:   transformer,
-			HTTPClient: httpClient,
-		}, nil
+		return buildChannelWithTransformer(c, transformer, httpClient), nil
 
 	case channel.TypeAnthropicAWS:
 		// For anthropic_aws, we need to create a transformer with AWS credentials
@@ -330,11 +299,7 @@ func (svc *ChannelService) buildChannel(c *ent.Channel) (*Channel, error) {
 			return nil, fmt.Errorf("failed to create outbound transformer: %w", err)
 		}
 
-		return &Channel{
-			Channel:    c,
-			Outbound:   transformer,
-			HTTPClient: httpClient,
-		}, nil
+		return buildChannelWithTransformer(c, transformer, httpClient), nil
 	case channel.TypeAnthropicGcp:
 		// For anthropic_vertex, we need to create a VertexTransformer with GCP credentials
 		// The transformer will handle Google Vertex AI integration
@@ -352,11 +317,7 @@ func (svc *ChannelService) buildChannel(c *ent.Channel) (*Channel, error) {
 			return nil, fmt.Errorf("failed to create outbound transformer: %w", err)
 		}
 
-		return &Channel{
-			Channel:    c,
-			Outbound:   transformer,
-			HTTPClient: httpClient,
-		}, nil
+		return buildChannelWithTransformer(c, transformer, httpClient), nil
 	case channel.TypeAnthropicFake:
 		// For anthropic_fake, we use the fake transformer for testing
 		fakeTransformer := anthropic.NewFakeTransformer()
@@ -381,11 +342,7 @@ func (svc *ChannelService) buildChannel(c *ent.Channel) (*Channel, error) {
 			return nil, fmt.Errorf("failed to create outbound transformer: %w", err)
 		}
 
-		return &Channel{
-			Channel:    c,
-			Outbound:   transformer,
-			HTTPClient: httpClient,
-		}, nil
+		return buildChannelWithTransformer(c, transformer, httpClient), nil
 	case channel.TypeGeminiOpenai:
 		transformer, err := geminioai.NewOutboundTransformerWithConfig(&geminioai.Config{
 			BaseURL: c.BaseURL,
@@ -395,11 +352,7 @@ func (svc *ChannelService) buildChannel(c *ent.Channel) (*Channel, error) {
 			return nil, fmt.Errorf("failed to create outbound transformer: %w", err)
 		}
 
-		return &Channel{
-			Channel:    c,
-			Outbound:   transformer,
-			HTTPClient: httpClient,
-		}, nil
+		return buildChannelWithTransformer(c, transformer, httpClient), nil
 	case channel.TypeOpenai,
 		channel.TypeDeepseek, channel.TypeMoonshot, channel.TypeLongcat, channel.TypeMinimax,
 		channel.TypePpio, channel.TypeSiliconflow,
@@ -413,11 +366,7 @@ func (svc *ChannelService) buildChannel(c *ent.Channel) (*Channel, error) {
 			return nil, fmt.Errorf("failed to create outbound transformer: %w", err)
 		}
 
-		return &Channel{
-			Channel:    c,
-			Outbound:   transformer,
-			HTTPClient: httpClient,
-		}, nil
+		return buildChannelWithTransformer(c, transformer, httpClient), nil
 	case channel.TypeGemini:
 		transformer, err := gemini.NewOutboundTransformerWithConfig(gemini.Config{
 			BaseURL: c.BaseURL,
@@ -427,11 +376,7 @@ func (svc *ChannelService) buildChannel(c *ent.Channel) (*Channel, error) {
 			return nil, fmt.Errorf("failed to create outbound transformer: %w", err)
 		}
 
-		return &Channel{
-			Channel:    c,
-			Outbound:   transformer,
-			HTTPClient: httpClient,
-		}, nil
+		return buildChannelWithTransformer(c, transformer, httpClient), nil
 	default:
 		return nil, errors.New("unknown channel type")
 	}

@@ -27,6 +27,12 @@ import {
 } from '../data/config_providers'
 import { Channel, ChannelType, ApiFormat, createChannelInputSchema, updateChannelInputSchema } from '../data/schema'
 
+const API_FORMAT_TRANSLATION_KEYS: Record<ApiFormat, string> = {
+  'openai/chat_completions': 'channels.dialogs.fields.apiFormat.formats.openaiChatCompletions',
+  'anthropic/messages': 'channels.dialogs.fields.apiFormat.formats.anthropicMessages',
+  'gemini/contents': 'channels.dialogs.fields.apiFormat.formats.geminiContents',
+}
+
 interface Props {
   currentRow?: Channel
   open: boolean
@@ -120,6 +126,17 @@ export function ChannelsActionDialog({ currentRow, open, onOpenChange, showModel
     return getApiFormatsForProvider(selectedProvider)
   }, [selectedProvider])
 
+  const getApiFormatLabel = useCallback(
+    (format: ApiFormat) => {
+      const translationKey = API_FORMAT_TRANSLATION_KEYS[format]
+      if (translationKey) {
+        return t(translationKey)
+      }
+      return format
+    },
+    [t]
+  )
+
   // Determine the actual channel type based on provider and API format
   const derivedChannelType = useMemo(() => {
     if (isEdit && currentRow) {
@@ -127,6 +144,14 @@ export function ChannelsActionDialog({ currentRow, open, onOpenChange, showModel
     }
     return getChannelTypeForApiFormat(selectedProvider, selectedApiFormat) || 'openai'
   }, [isEdit, currentRow, selectedProvider, selectedApiFormat])
+
+  const baseURLPlaceholder = useMemo(() => {
+    const defaultURL = getDefaultBaseURL(derivedChannelType)
+    if (defaultURL) {
+      return defaultURL
+    }
+    return t('channels.dialogs.fields.baseURL.placeholder')
+  }, [derivedChannelType, t])
 
   const formSchema = isEdit ? updateChannelInputSchema : createChannelInputSchema
 
@@ -567,7 +592,7 @@ export function ChannelsActionDialog({ currentRow, open, onOpenChange, showModel
                           isControlled={true}
                           items={availableApiFormats.map((format) => ({
                             value: format,
-                            label: format,
+                            label: getApiFormatLabel(format),
                           }))}
                         />
                         {isEdit && (
@@ -608,7 +633,7 @@ export function ChannelsActionDialog({ currentRow, open, onOpenChange, showModel
                           </FormLabel>
                           <div className='col-span-6 space-y-1'>
                             <Input
-                              placeholder={t('channels.dialogs.fields.baseURL.placeholder')}
+                              placeholder={baseURLPlaceholder}
                               autoComplete='off'
                               aria-invalid={!!fieldState.error}
                               data-testid='channel-base-url-input'

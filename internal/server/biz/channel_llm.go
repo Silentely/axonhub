@@ -164,7 +164,7 @@ func (svc *ChannelService) buildChannel(c *ent.Channel) (*Channel, error) {
 
 	//nolint:exhaustive // TODO SUPPORT more providers.
 	switch c.Type {
-	case channel.TypeDoubao:
+	case channel.TypeDoubao, channel.TypeVolcengine:
 		transformer, err := doubao.NewOutboundTransformerWithConfig(&doubao.Config{
 			BaseURL: c.BaseURL,
 			APIKey:  c.Credentials.APIKey,
@@ -211,7 +211,22 @@ func (svc *ChannelService) buildChannel(c *ent.Channel) (*Channel, error) {
 			Outbound:   transformer,
 			HTTPClient: httpClient,
 		}, nil
-	case channel.TypeAnthropic, channel.TypeLongcatAnthropic, channel.TypeMinimaxAnthropic:
+	case channel.TypeLongcatAnthropic:
+		transformer, err := anthropic.NewOutboundTransformerWithConfig(&anthropic.Config{
+			Type:    anthropic.PlatformLongCat,
+			BaseURL: c.BaseURL,
+			APIKey:  c.Credentials.APIKey,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create outbound transformer: %w", err)
+		}
+
+		return &Channel{
+			Channel:    c,
+			Outbound:   transformer,
+			HTTPClient: httpClient,
+		}, nil
+	case channel.TypeAnthropic, channel.TypeMinimaxAnthropic:
 		transformer, err := anthropic.NewOutboundTransformerWithConfig(&anthropic.Config{
 			Type:    anthropic.PlatformDirect,
 			BaseURL: c.BaseURL,
@@ -387,7 +402,7 @@ func (svc *ChannelService) buildChannel(c *ent.Channel) (*Channel, error) {
 		}, nil
 	case channel.TypeOpenai,
 		channel.TypeDeepseek, channel.TypeMoonshot, channel.TypeLongcat, channel.TypeMinimax,
-		channel.TypePpio, channel.TypeSiliconflow, channel.TypeVolcengine,
+		channel.TypePpio, channel.TypeSiliconflow,
 		channel.TypeVercel, channel.TypeAihubmix, channel.TypeBurncloud, channel.TypeBailian:
 		transformer, err := openai.NewOutboundTransformerWithConfig(&openai.Config{
 			Type:    openai.PlatformOpenAI,

@@ -27,12 +27,6 @@ import {
 } from '../data/config_providers'
 import { Channel, ChannelType, ApiFormat, createChannelInputSchema, updateChannelInputSchema } from '../data/schema'
 
-const API_FORMAT_TRANSLATION_KEYS: Record<ApiFormat, string> = {
-  'openai/chat_completions': 'channels.dialogs.fields.apiFormat.formats.openaiChatCompletions',
-  'anthropic/messages': 'channels.dialogs.fields.apiFormat.formats.anthropicMessages',
-  'gemini/contents': 'channels.dialogs.fields.apiFormat.formats.geminiContents',
-}
-
 interface Props {
   currentRow?: Channel
   open: boolean
@@ -128,11 +122,12 @@ export function ChannelsActionDialog({ currentRow, open, onOpenChange, showModel
 
   const getApiFormatLabel = useCallback(
     (format: ApiFormat) => {
-      const translationKey = API_FORMAT_TRANSLATION_KEYS[format]
-      if (translationKey) {
-        return t(translationKey)
-      }
-      return format
+      // Convert 'openai/chat_completions' to 'openaiChatCompletions'
+      const formatKey = format
+        .split('/')
+        .map((part, index) => (index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1)))
+        .join('')
+      return t(`channels.dialogs.fields.apiFormat.formats.${formatKey}`)
     },
     [t]
   )
@@ -146,12 +141,13 @@ export function ChannelsActionDialog({ currentRow, open, onOpenChange, showModel
   }, [isEdit, currentRow, selectedProvider, selectedApiFormat])
 
   const baseURLPlaceholder = useMemo(() => {
-    const defaultURL = getDefaultBaseURL(derivedChannelType)
+    const currentType = selectedType || derivedChannelType
+    const defaultURL = getDefaultBaseURL(currentType)
     if (defaultURL) {
       return defaultURL
     }
     return t('channels.dialogs.fields.baseURL.placeholder')
-  }, [derivedChannelType, t])
+  }, [selectedType, derivedChannelType, t])
 
   const formSchema = isEdit ? updateChannelInputSchema : createChannelInputSchema
 

@@ -775,9 +775,9 @@
           "editDisabled": "API format cannot be changed",
           "placeholder": "Select API format",
           "formats": {
-            "openaiChatCompletions": "OpenAI(Chat Completions)",
-            "anthropicMessages": "Anthropic(Messages)",
-            "geminiContents": "Gemini(Contents)"
+            "openaiChatCompletions": "OpenAI (Chat Completions)",
+            "anthropicMessages": "Anthropic (Messages)",
+            "geminiContents": "Gemini (Contents)"
           }
         },
         "provider": {

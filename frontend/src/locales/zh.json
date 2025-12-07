@@ -803,9 +803,9 @@
           "editDisabled": "无法更改 API 格式",
           "placeholder": "选择 API 格式",
           "formats": {
-            "openaiChatCompletions": "OpenAI(Chat Completions)",
-            "anthropicMessages": "Anthropic(Messages)",
-            "geminiContents": "Gemini(Contents)"
+            "openaiChatCompletions": "OpenAI (Chat Completions)",
+            "anthropicMessages": "Anthropic (Messages)",
+            "geminiContents": "Gemini (Contents)"
           }
         },
         "provider": {

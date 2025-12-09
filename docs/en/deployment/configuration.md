@@ -114,7 +114,8 @@ cache:
 
   # Redis cache configuration
   redis:
-    addr: ""                    # Redis address: 127.0.0.1:6379 | redis://... | rediss://...
+    url: ""                     # Redis connection URL(redis:// or rediss://)
+    addr: ""                    # Redis address: 127.0.0.1:6379
     username: ""                # Overrides username in URL if set
     password: ""                # Overrides password in URL if set
     db: 0                       # Overrides DB in URL path (/0)
@@ -127,6 +128,7 @@ cache:
 - `AXONHUB_CACHE_MODE`
 - `AXONHUB_CACHE_MEMORY_EXPIRATION`
 - `AXONHUB_CACHE_MEMORY_CLEANUP_INTERVAL`
+- `AXONHUB_CACHE_REDIS_URL`
 - `AXONHUB_CACHE_REDIS_ADDR`
 - `AXONHUB_CACHE_REDIS_USERNAME`
 - `AXONHUB_CACHE_REDIS_PASSWORD`

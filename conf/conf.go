@@ -173,6 +173,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("cache.default_expiration", "5m")
 	v.SetDefault("cache.cleanup_interval", "10m")
 	v.SetDefault("cache.redis.addr", "")
+	v.SetDefault("cache.redis.url", "")
 	v.SetDefault("cache.redis.username", "")
 	v.SetDefault("cache.redis.password", "")
 	v.SetDefault("cache.redis.db", 0)

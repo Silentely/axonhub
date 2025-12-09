@@ -25,6 +25,7 @@ type MemoryConfig struct {
 
 type RedisConfig struct {
 	Addr                  string        `conf:"addr" yaml:"addr" json:"addr"`
+	URL                   string        `conf:"url" yaml:"url" json:"url"`
 	Username              string        `conf:"username" yaml:"username" json:"username"`
 	Password              string        `conf:"password" yaml:"password" json:"password"`
 	DB                    int           `conf:"db" yaml:"db" json:"db"`

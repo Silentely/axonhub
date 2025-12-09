@@ -499,7 +499,7 @@ func TestNewRedisOptions(t *testing.T) {
 
 	t.Run("rediss url auto tls and db", func(t *testing.T) {
 		opts, err := newRedisOptions(RedisConfig{
-			Addr:                  "rediss://user:pass@localhost:6380/2",
+			URL:                   "rediss://user:pass@localhost:6380/2",
 			TLSInsecureSkipVerify: true,
 		})
 		require.NoError(t, err)
@@ -513,7 +513,7 @@ func TestNewRedisOptions(t *testing.T) {
 
 	t.Run("config overrides url credentials and db", func(t *testing.T) {
 		opts, err := newRedisOptions(RedisConfig{
-			Addr:     "redis://u1:p1@127.0.0.1:6379/1",
+			URL:      "redis://u1:p1@127.0.0.1:6379/1",
 			Username: "u2",
 			Password: "p2",
 			DB:       3,
@@ -527,7 +527,7 @@ func TestNewRedisOptions(t *testing.T) {
 
 	t.Run("redis url without credentials", func(t *testing.T) {
 		opts, err := newRedisOptions(RedisConfig{
-			Addr: "redis://127.0.0.1:6379",
+			URL: "redis://127.0.0.1:6379",
 		})
 		require.NoError(t, err)
 		assert.Equal(t, "127.0.0.1:6379", opts.Addr)
@@ -554,12 +554,10 @@ func TestNewRedisOptions(t *testing.T) {
 		assert.Contains(t, err.Error(), "tls_insecure_skip_verify requires TLS to be enabled")
 	})
 
-	t.Run("empty addr", func(t *testing.T) {
-		_, err := newRedisOptions(RedisConfig{
-			Addr: "",
-		})
+	t.Run("empty addr and url", func(t *testing.T) {
+		_, err := newRedisOptions(RedisConfig{})
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "redis addr is empty")
+		assert.Contains(t, err.Error(), "redis addr or url is required")
 	})
 
 	t.Run("whitespace only addr", func(t *testing.T) {
@@ -567,18 +565,18 @@ func TestNewRedisOptions(t *testing.T) {
 			Addr: "   ",
 		})
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "redis addr is empty")
+		assert.Contains(t, err.Error(), "redis addr or url is required")
 	})
 
 	t.Run("invalid scheme", func(t *testing.T) {
-		_, err := newRedisOptions(RedisConfig{Addr: "http://example.com"})
+		_, err := newRedisOptions(RedisConfig{URL: "http://example.com"})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "unsupported redis scheme")
 	})
 
 	t.Run("redis url with invalid db", func(t *testing.T) {
 		_, err := newRedisOptions(RedisConfig{
-			Addr: "redis://127.0.0.1:6379/invalid",
+			URL: "redis://127.0.0.1:6379/invalid",
 		})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid redis db in url")
@@ -586,7 +584,7 @@ func TestNewRedisOptions(t *testing.T) {
 
 	t.Run("redis url missing host", func(t *testing.T) {
 		_, err := newRedisOptions(RedisConfig{
-			Addr: "redis://",
+			URL: "redis://",
 		})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "redis url missing host")
@@ -594,7 +592,7 @@ func TestNewRedisOptions(t *testing.T) {
 
 	t.Run("invalid url format", func(t *testing.T) {
 		_, err := newRedisOptions(RedisConfig{
-			Addr: "redis://:invalid",
+			URL: "redis://:invalid",
 		})
 		require.Error(t, err)
 	})
@@ -613,7 +611,7 @@ func TestNewRedisOptions(t *testing.T) {
 
 	t.Run("redis url with explicit tls flag", func(t *testing.T) {
 		opts, err := newRedisOptions(RedisConfig{
-			Addr:     "redis://127.0.0.1:6379",
+			URL:      "redis://127.0.0.1:6379",
 			TLS:      true,
 			Username: "user",
 			Password: "pass",

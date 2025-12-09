@@ -164,26 +164,25 @@ func NewTwoLevelWithClients[T any](memClient *gocache.Cache, redisClient *redis.
 	return NewTwoLevel[T](mem, rds)
 }
 
-// newRedisOptions constructs redis.Options from RedisConfig, supporting plain
-// host:port, redis://, rediss:// with credential parsing and TLS toggling.
+// newRedisOptions constructs redis.Options from RedisConfig.
+// Supports two modes:
+// 1. URL mode: Use cfg.URL for full redis:// or rediss:// URLs with credentials
+// 2. Simple mode: Use cfg.Addr for plain host:port format
+// Priority: URL > Addr
 func newRedisOptions(cfg RedisConfig) (*redis.Options, error) {
-	if strings.TrimSpace(cfg.Addr) == "" {
-		return nil, errors.New("redis addr is empty")
-	}
-
 	opts := &redis.Options{}
 
-	// URL-style address
-	if strings.Contains(cfg.Addr, "://") {
-		u, err := url.Parse(cfg.Addr)
+	// Priority 1: URL mode (redis:// or rediss://)
+	if cfg.URL != "" {
+		u, err := url.Parse(cfg.URL)
 		if err != nil {
-			return nil, fmt.Errorf("parse redis addr: %w", err)
+			return nil, fmt.Errorf("parse redis url: %w", err)
 		}
 
 		switch u.Scheme {
 		case "redis", "rediss":
 		default:
-			return nil, fmt.Errorf("unsupported redis scheme: %s", u.Scheme)
+			return nil, fmt.Errorf("unsupported redis scheme: %s (expected redis:// or rediss://)", u.Scheme)
 		}
 
 		if u.Host == "" {
@@ -215,11 +214,17 @@ func newRedisOptions(cfg RedisConfig) (*redis.Options, error) {
 				InsecureSkipVerify: cfg.TLSInsecureSkipVerify,
 			}
 		}
+	} else if cfg.Addr != "" {
+		// Priority 2: Simple addr mode (host:port)
+		opts.Addr = strings.TrimSpace(cfg.Addr)
+		if opts.Addr == "" {
+			return nil, errors.New("redis addr or url is required")
+		}
 	} else {
-		opts.Addr = cfg.Addr
+		return nil, errors.New("redis addr or url is required")
 	}
 
-	// Config fields override URL credentials/DB when explicitly set.
+	// Config fields override URL credentials/DB when explicitly set
 	if cfg.Username != "" {
 		opts.Username = cfg.Username
 	}

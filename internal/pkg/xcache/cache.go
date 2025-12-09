@@ -211,6 +211,7 @@ func newRedisOptions(cfg RedisConfig) (*redis.Options, error) {
 
 		if u.Scheme == "rediss" {
 			opts.TLSConfig = &tls.Config{
+				MinVersion:         tls.VersionTLS12, // #nosec G402 -- User can explicitly enable InsecureSkipVerify via config
 				InsecureSkipVerify: cfg.TLSInsecureSkipVerify,
 			}
 		}
@@ -238,9 +239,11 @@ func newRedisOptions(cfg RedisConfig) (*redis.Options, error) {
 	// Explicit TLS flag
 	if cfg.TLS {
 		if opts.TLSConfig == nil {
-			opts.TLSConfig = &tls.Config{}
+			opts.TLSConfig = &tls.Config{
+				MinVersion: tls.VersionTLS12, // #nosec G402 -- User can explicitly enable InsecureSkipVerify via config
+			}
 		}
-		opts.TLSConfig.InsecureSkipVerify = cfg.TLSInsecureSkipVerify
+		opts.TLSConfig.InsecureSkipVerify = cfg.TLSInsecureSkipVerify // #nosec G402 -- User explicitly controls this via config
 	}
 
 	// Ensure TLSInsecureSkipVerify is not silently set without TLS

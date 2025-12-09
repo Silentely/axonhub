@@ -976,7 +976,7 @@ func TestOverrideHeadersMiddleware_EmptyOverrideHeaders(t *testing.T) {
 	assert.Equal(t, httpRequest.Headers, modifiedRequest.Headers)
 }
 
-func TestOverrideHeadersMiddleware_PreserveExistingAuth(t *testing.T) {
+func TestOverrideHeadersMiddleware_OverrideExistingAuth(t *testing.T) {
 	ctx := context.Background()
 
 	channel := &biz.Channel{

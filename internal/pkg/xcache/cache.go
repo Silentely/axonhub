@@ -232,8 +232,8 @@ func newRedisOptions(cfg RedisConfig) (*redis.Options, error) {
 	if cfg.Password != "" {
 		opts.Password = cfg.Password
 	}
-	if cfg.DB != 0 {
-		opts.DB = cfg.DB
+	if cfg.DB != nil {
+		opts.DB = *cfg.DB
 	}
 
 	// Explicit TLS flag

@@ -176,7 +176,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("cache.redis.url", "")
 	v.SetDefault("cache.redis.username", "")
 	v.SetDefault("cache.redis.password", "")
-	v.SetDefault("cache.redis.db", 0)
+	// Note: cache.redis.db has no default value to allow explicit override to 0
 	v.SetDefault("cache.redis.tls", false)
 	v.SetDefault("cache.redis.tls_insecure_skip_verify", false)
 }

@@ -14,6 +14,10 @@ import (
 	gocache "github.com/patrickmn/go-cache"
 )
 
+func intPtr(i int) *int {
+	return &i
+}
+
 func TestNewMemory(t *testing.T) {
 	client := gocache.New(5*time.Minute, 10*time.Minute)
 	cache := NewMemory[string](client)
@@ -516,13 +520,23 @@ func TestNewRedisOptions(t *testing.T) {
 			URL:      "redis://u1:p1@127.0.0.1:6379/1",
 			Username: "u2",
 			Password: "p2",
-			DB:       3,
+			DB:       intPtr(3),
 		})
 		require.NoError(t, err)
 		assert.Equal(t, "127.0.0.1:6379", opts.Addr)
 		assert.Equal(t, "u2", opts.Username)
 		assert.Equal(t, "p2", opts.Password)
 		assert.Equal(t, 3, opts.DB)
+	})
+
+	t.Run("config overrides url db to 0", func(t *testing.T) {
+		opts, err := newRedisOptions(RedisConfig{
+			URL: "redis://127.0.0.1:6379/1",
+			DB:  intPtr(0),
+		})
+		require.NoError(t, err)
+		assert.Equal(t, "127.0.0.1:6379", opts.Addr)
+		assert.Equal(t, 0, opts.DB)
 	})
 
 	t.Run("redis url without credentials", func(t *testing.T) {
@@ -615,7 +629,7 @@ func TestNewRedisOptions(t *testing.T) {
 			TLS:      true,
 			Username: "user",
 			Password: "pass",
-			DB:       5,
+			DB:       intPtr(5),
 		})
 		require.NoError(t, err)
 		assert.Equal(t, "127.0.0.1:6379", opts.Addr)

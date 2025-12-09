@@ -160,7 +160,7 @@ func (c *Channel) chooseModelInternal(model string) (string, error) {
 // GetOverrideParameters returns the cached override parameters for the channel.
 // If the parameters haven't been parsed yet, it parses and caches them.
 func (c *Channel) GetOverrideParameters() map[string]any {
-	if c.CachedOverrideParams != nil && len(c.CachedOverrideParams) > 0 {
+	if c.CachedOverrideParams != nil {
 		return c.CachedOverrideParams
 	}
 
@@ -189,7 +189,7 @@ func (c *Channel) GetOverrideParameters() map[string]any {
 // GetOverrideHeaders returns the cached override headers for the channel.
 // If the headers haven't been loaded yet, it loads and caches them.
 func (c *Channel) GetOverrideHeaders() []objects.HeaderEntry {
-	if c.CachedOverrideHeaders != nil && len(c.CachedOverrideHeaders) > 0 {
+	if c.CachedOverrideHeaders != nil {
 		return c.CachedOverrideHeaders
 	}
 

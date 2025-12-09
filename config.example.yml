@@ -33,10 +33,17 @@ cache:
   
   # Redis cache configuration
   redis:
-    addr: ""                    # e.g. 127.0.0.1:6379 (env: AXONHUB_CACHE_REDIS_ADDR)
-    username: ""                # Optional (env: AXONHUB_CACHE_REDIS_USERNAME)
-    password: ""                # Optional (env: AXONHUB_CACHE_REDIS_PASSWORD)
-    db: 0                       # Redis DB index (env: AXONHUB_CACHE_REDIS_DB)
+    # Supported address formats:
+    #   - "127.0.0.1:6379"
+    #   - "redis://127.0.0.1:6379"
+    #   - "rediss://127.0.0.1:6380" (auto-enables TLS)
+    #   - "redis://user:pass@127.0.0.1:6379/0"
+    addr: ""                    # Redis address (env: AXONHUB_CACHE_REDIS_ADDR)
+    username: ""                # Optional, overrides URL username (env: AXONHUB_CACHE_REDIS_USERNAME)
+    password: ""                # Optional, overrides URL password (env: AXONHUB_CACHE_REDIS_PASSWORD)
+    db: 0                       # Redis DB index, overrides URL /db (env: AXONHUB_CACHE_REDIS_DB)
+    tls: false                  # Enable TLS (env: AXONHUB_CACHE_REDIS_TLS)
+    tls_insecure_skip_verify: false # Skip TLS cert verification for self-signed certs (env: AXONHUB_CACHE_REDIS_TLS_INSECURE_SKIP_VERIFY)
     expiration: "30m"           # Redis cache TTL (env: AXONHUB_CACHE_REDIS_EXPIRATION)
 
 # Logging configuration

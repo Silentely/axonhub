@@ -2,8 +2,12 @@ package xcache
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
+	"net/url"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/eko/gocache/lib/v4/store"
@@ -82,12 +86,12 @@ func NewFromConfig[T any](cfg Config) Cache[T] {
 	var rds SetterCache[T]
 
 	if cfg.Redis.Addr != "" && cfg.Mode != ModeMemory {
-		client := redis.NewClient(&redis.Options{
-			Addr:     cfg.Redis.Addr,
-			Username: cfg.Redis.Username,
-			Password: cfg.Redis.Password,
-			DB:       cfg.Redis.DB,
-		})
+		opts, err := newRedisOptions(cfg.Redis)
+		if err != nil {
+			panic(fmt.Errorf("invalid redis config: %w", err))
+		}
+
+		client := redis.NewClient(opts)
 
 		if err := client.Ping(context.Background()).Err(); err != nil {
 			panic(fmt.Errorf("failed to ping redis: %w", err))
@@ -158,4 +162,86 @@ func NewTwoLevelWithClients[T any](memClient *gocache.Cache, redisClient *redis.
 	rds := NewRedis[T](redisClient, redisOptions...)
 
 	return NewTwoLevel[T](mem, rds)
+}
+
+// newRedisOptions constructs redis.Options from RedisConfig, supporting plain
+// host:port, redis://, rediss:// with credential parsing and TLS toggling.
+func newRedisOptions(cfg RedisConfig) (*redis.Options, error) {
+	if strings.TrimSpace(cfg.Addr) == "" {
+		return nil, errors.New("redis addr is empty")
+	}
+
+	opts := &redis.Options{}
+
+	// URL-style address
+	if strings.Contains(cfg.Addr, "://") {
+		u, err := url.Parse(cfg.Addr)
+		if err != nil {
+			return nil, fmt.Errorf("parse redis addr: %w", err)
+		}
+
+		switch u.Scheme {
+		case "redis", "rediss":
+		default:
+			return nil, fmt.Errorf("unsupported redis scheme: %s", u.Scheme)
+		}
+
+		if u.Host == "" {
+			return nil, errors.New("redis url missing host")
+		}
+
+		opts.Addr = u.Host
+
+		if u.User != nil {
+			opts.Username = u.User.Username()
+			if pwd, ok := u.User.Password(); ok {
+				opts.Password = pwd
+			}
+		}
+
+		if u.Path != "" && u.Path != "/" {
+			dbStr := strings.TrimPrefix(u.Path, "/")
+			if dbStr != "" {
+				db, err := strconv.Atoi(dbStr)
+				if err != nil {
+					return nil, fmt.Errorf("invalid redis db in url: %w", err)
+				}
+				opts.DB = db
+			}
+		}
+
+		if u.Scheme == "rediss" {
+			opts.TLSConfig = &tls.Config{
+				InsecureSkipVerify: cfg.TLSInsecureSkipVerify,
+			}
+		}
+	} else {
+		opts.Addr = cfg.Addr
+	}
+
+	// Config fields override URL credentials/DB when explicitly set.
+	if cfg.Username != "" {
+		opts.Username = cfg.Username
+	}
+	if cfg.Password != "" {
+		opts.Password = cfg.Password
+	}
+	if cfg.DB != 0 {
+		opts.DB = cfg.DB
+	}
+
+	// Explicit TLS flag
+	if cfg.TLS {
+		if opts.TLSConfig == nil {
+			opts.TLSConfig = &tls.Config{}
+		}
+		opts.TLSConfig.InsecureSkipVerify = cfg.TLSInsecureSkipVerify
+	}
+
+	// Ensure TLSInsecureSkipVerify is not silently set without TLS
+	if opts.TLSConfig == nil && cfg.TLSInsecureSkipVerify {
+		return nil, errors.New("tls_insecure_skip_verify requires TLS to be enabled (tls=true or rediss://)")
+	}
+
+	return opts, nil
 }

@@ -176,6 +176,8 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("cache.redis.username", "")
 	v.SetDefault("cache.redis.password", "")
 	v.SetDefault("cache.redis.db", 0)
+	v.SetDefault("cache.redis.tls", false)
+	v.SetDefault("cache.redis.tls_insecure_skip_verify", false)
 }
 
 // parseLogLevel converts a string log level to zapcore.Level.

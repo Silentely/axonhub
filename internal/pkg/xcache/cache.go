@@ -85,7 +85,7 @@ func NewFromConfig[T any](cfg Config) Cache[T] {
 	// Build redis setter cache if configured
 	var rds SetterCache[T]
 
-	if cfg.Redis.Addr != "" && cfg.Mode != ModeMemory {
+	if (cfg.Redis.Addr != "" || cfg.Redis.URL != "") && cfg.Mode != ModeMemory {
 		opts, err := newRedisOptions(cfg.Redis)
 		if err != nil {
 			panic(fmt.Errorf("invalid redis config: %w", err))

@@ -273,6 +273,7 @@ func convertLLMChoiceToGeminiCandidate(choice *llm.Choice, isStream bool) *Candi
 	}
 
 	var msg *llm.Message
+
 	if isStream {
 		// For streaming, prefer Delta
 		if choice.Delta != nil {

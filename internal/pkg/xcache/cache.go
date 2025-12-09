@@ -2,8 +2,10 @@ package xcache
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/eko/gocache/lib/v4/store"
@@ -81,13 +83,13 @@ func NewFromConfig[T any](cfg Config) Cache[T] {
 	// Build redis setter cache if configured
 	var rds SetterCache[T]
 
-	if cfg.Redis.Addr != "" && cfg.Mode != ModeMemory {
-		client := redis.NewClient(&redis.Options{
-			Addr:     cfg.Redis.Addr,
-			Username: cfg.Redis.Username,
-			Password: cfg.Redis.Password,
-			DB:       cfg.Redis.DB,
-		})
+	if strings.TrimSpace(cfg.Redis.Addr) != "" && cfg.Mode != ModeMemory {
+		redisOptions, err := newRedisOptions(cfg.Redis)
+		if err != nil {
+			panic(fmt.Errorf("failed to build redis options: %w", err))
+		}
+
+		client := redis.NewClient(redisOptions)
 
 		if err := client.Ping(context.Background()).Err(); err != nil {
 			panic(fmt.Errorf("failed to ping redis: %w", err))
@@ -130,6 +132,63 @@ func defaultIfZero(d, def time.Duration) time.Duration {
 	}
 
 	return d
+}
+
+func newRedisOptions(cfg RedisConfig) (*redis.Options, error) {
+	addr := strings.TrimSpace(cfg.Addr)
+	if addr == "" {
+		return nil, fmt.Errorf("redis addr is empty")
+	}
+
+	lowerAddr := strings.ToLower(addr)
+
+	var (
+		opts *redis.Options
+		err  error
+	)
+
+	if strings.Contains(lowerAddr, "://") {
+		opts, err = redis.ParseURL(addr)
+		if err != nil {
+			return nil, err
+		}
+
+		if cfg.Username != "" {
+			opts.Username = cfg.Username
+		}
+
+		if cfg.Password != "" {
+			opts.Password = cfg.Password
+		}
+
+		if cfg.DB != 0 {
+			opts.DB = cfg.DB
+		}
+	} else {
+		opts = &redis.Options{
+			Addr:     addr,
+			Username: cfg.Username,
+			Password: cfg.Password,
+			DB:       cfg.DB,
+		}
+	}
+
+	useTLS := cfg.TLS || strings.HasPrefix(lowerAddr, "rediss://")
+	if useTLS || cfg.TLSInsecureSkipVerify {
+		if opts.TLSConfig == nil {
+			opts.TLSConfig = &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			}
+		}
+
+		if opts.TLSConfig.MinVersion < tls.VersionTLS12 {
+			opts.TLSConfig.MinVersion = tls.VersionTLS12
+		}
+
+		opts.TLSConfig.InsecureSkipVerify = cfg.TLSInsecureSkipVerify
+	}
+
+	return opts, nil
 }
 
 // NewRedis creates a pure Redis cache using github.com/redis/go-redis/v9 as the client.

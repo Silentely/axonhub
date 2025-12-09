@@ -484,3 +484,108 @@ func TestSeparateExpirationConfig(t *testing.T) {
 	// since the two-level cache behavior is complex, but we can verify the
 	// configuration is accepted and the cache works
 }
+
+func TestNewRedisOptions_Basic(t *testing.T) {
+	cfg := RedisConfig{
+		Addr:     "127.0.0.1:6379",
+		Username: "user",
+		Password: "pass",
+		DB:       1,
+	}
+
+	opts, err := newRedisOptions(cfg)
+	assert.NoError(t, err)
+	assert.NotNil(t, opts)
+	assert.Equal(t, "127.0.0.1:6379", opts.Addr)
+	assert.Equal(t, "user", opts.Username)
+	assert.Equal(t, "pass", opts.Password)
+	assert.Equal(t, 1, opts.DB)
+	assert.Nil(t, opts.TLSConfig)
+}
+
+func TestNewRedisOptions_TLSEnabled(t *testing.T) {
+	cfg := RedisConfig{
+		Addr: "127.0.0.1:6379",
+		TLS:  true,
+	}
+
+	opts, err := newRedisOptions(cfg)
+	assert.NoError(t, err)
+	assert.NotNil(t, opts)
+	assert.NotNil(t, opts.TLSConfig)
+	assert.False(t, opts.TLSConfig.InsecureSkipVerify)
+}
+
+func TestNewRedisOptions_TLSInsecure(t *testing.T) {
+	cfg := RedisConfig{
+		Addr:                  "127.0.0.1:6379",
+		TLS:                   true,
+		TLSInsecureSkipVerify: true,
+	}
+
+	opts, err := newRedisOptions(cfg)
+	assert.NoError(t, err)
+	assert.NotNil(t, opts)
+	assert.NotNil(t, opts.TLSConfig)
+	assert.True(t, opts.TLSConfig.InsecureSkipVerify)
+}
+
+func TestNewRedisOptions_RedissURL(t *testing.T) {
+	cfg := RedisConfig{
+		Addr: "rediss://127.0.0.1:6380",
+	}
+
+	opts, err := newRedisOptions(cfg)
+	assert.NoError(t, err)
+	assert.NotNil(t, opts)
+	assert.NotNil(t, opts.TLSConfig)
+}
+
+func TestNewRedisOptions_RedissURLWithAuth(t *testing.T) {
+	cfg := RedisConfig{
+		Addr:     "rediss://user:pass@127.0.0.1:6380/2",
+		Username: "override-user",
+		Password: "override-pass",
+		DB:       5,
+	}
+
+	opts, err := newRedisOptions(cfg)
+	assert.NoError(t, err)
+	assert.NotNil(t, opts)
+	assert.NotNil(t, opts.TLSConfig)
+	assert.Equal(t, "override-user", opts.Username)
+	assert.Equal(t, "override-pass", opts.Password)
+	assert.Equal(t, 5, opts.DB)
+}
+
+func TestNewRedisOptions_RedisURL(t *testing.T) {
+	cfg := RedisConfig{
+		Addr: "redis://127.0.0.1:6379",
+	}
+
+	opts, err := newRedisOptions(cfg)
+	assert.NoError(t, err)
+	assert.NotNil(t, opts)
+	assert.Nil(t, opts.TLSConfig)
+}
+
+func TestNewRedisOptions_EmptyAddr(t *testing.T) {
+	cfg := RedisConfig{
+		Addr: "",
+	}
+
+	opts, err := newRedisOptions(cfg)
+	assert.Error(t, err)
+	assert.Nil(t, opts)
+	assert.Contains(t, err.Error(), "empty")
+}
+
+func TestNewRedisOptions_InvalidURL(t *testing.T) {
+	cfg := RedisConfig{
+		Addr: "://invalid-url",
+	}
+
+	opts, err := newRedisOptions(cfg)
+	assert.Error(t, err)
+	assert.Nil(t, opts)
+}

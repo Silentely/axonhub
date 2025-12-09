@@ -114,12 +114,23 @@ cache:
 
   # Redis cache configuration
   redis:
-    addr: ""                    # Redis server address
+    addr: ""                    # Redis server address (e.g., 127.0.0.1:6379, redis://..., or rediss://...)
     username: ""                # Redis username
     password: ""                # Redis password
     db: 0                       # Redis DB index
     expiration: "30m"           # Redis cache TTL
+    tls: false                  # Enable TLS/SSL connection
+    tls_insecure_skip_verify: false # Skip TLS certificate verification
 ```
+
+**Redis Address Formats:**
+- Simple address: `127.0.0.1:6379`
+- Redis URL: `redis://127.0.0.1:6379`
+- Redis TLS URL: `rediss://127.0.0.1:6380`
+- With authentication: `redis://username:password@127.0.0.1:6379/0`
+- With TLS: `rediss://username:password@127.0.0.1:6380/0`
+
+> **Note**: When using `rediss://` protocol in the address, TLS will be automatically enabled. You can also explicitly set `tls: true` for non-URL addresses.
 
 **Environment Variables:**
 - `AXONHUB_CACHE_MODE`
@@ -130,6 +141,8 @@ cache:
 - `AXONHUB_CACHE_REDIS_PASSWORD`
 - `AXONHUB_CACHE_REDIS_DB`
 - `AXONHUB_CACHE_REDIS_EXPIRATION`
+- `AXONHUB_CACHE_REDIS_TLS`
+- `AXONHUB_CACHE_REDIS_TLS_INSECURE_SKIP_VERIFY`
 
 ### Logging Configuration
 

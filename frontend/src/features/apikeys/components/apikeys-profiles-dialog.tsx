@@ -375,8 +375,10 @@ function ProfileCard({ profileIndex, form, onRemove, canRemove, availableModels,
               type='button'
               variant='ghost'
               size='sm'
-              onClick={() => setIsCollapsed(!isCollapsed)}
+              onClick={() => setIsCollapsed((prev) => !prev)}
               className='hover:bg-accent'
+              aria-expanded={!isCollapsed}
+              aria-label={isCollapsed ? t('apikeys.profiles.expand') : t('apikeys.profiles.collapse')}
             >
               {isCollapsed ? <IconChevronDown className='h-4 w-4' /> : <IconChevronUp className='h-4 w-4' />}
             </Button>

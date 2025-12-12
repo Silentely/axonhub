@@ -37,8 +37,9 @@ export const TagsInput = forwardRef<HTMLDivElement, TagsInputProps>(({ value = [
   )
 
   const removeTag = useCallback(
-    (indexToRemove: number) => {
-      onChange(value.filter((_, index) => index !== indexToRemove))
+    (tagToRemove: string) => {
+      // 标签在组件内已去重，按值删除更稳定（避免索引变更导致误删）
+      onChange(value.filter((tag) => tag !== tagToRemove))
     },
     [value, onChange]
   )
@@ -60,12 +61,12 @@ export const TagsInput = forwardRef<HTMLDivElement, TagsInputProps>(({ value = [
       )}
       onClick={() => inputRef.current?.focus()}
     >
-      {value.map((tag, index) => (
-        <div key={index} className='bg-secondary text-secondary-foreground flex items-center gap-1 rounded-sm px-2 py-0.5'>
+      {value.map((tag) => (
+        <div key={tag} className='bg-secondary text-secondary-foreground flex items-center gap-1 rounded-sm px-2 py-0.5'>
           <span className='text-xs'>{tag}</span>
           <button
             type='button'
-            onClick={() => removeTag(index)}
+            onClick={() => removeTag(tag)}
             className='text-secondary-foreground/80 hover:text-secondary-foreground focus:outline-none'
             aria-label={`Remove ${tag} tag`}
           >

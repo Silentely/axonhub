@@ -260,6 +260,8 @@ func getActiveProfile(profiles *objects.APIKeyProfiles) *objects.APIKeyProfile {
 				return &profiles.Profiles[i]
 			}
 		}
+		// 如果指定的 active profile 未找到,返回 nil 避免静默使用错误的 profile
+		return nil
 	}
 
 	// 否则返回第一个profile作为默认

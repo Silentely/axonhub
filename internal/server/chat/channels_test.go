@@ -1129,9 +1129,9 @@ func TestSelectedChannelsSelector_SingleChannelNotFound(t *testing.T) {
 	result, err := filteredSelector.Select(ctx, req)
 	require.Error(t, err)
 	assert.Nil(t, result)
-	assert.Contains(t, err.Error(), "指定的渠道 ID")
+	assert.Contains(t, err.Error(), "specified channel ID")
 	assert.Contains(t, err.Error(), "9999")
-	assert.Contains(t, err.Error(), "不可用或不支持模型")
+	assert.Contains(t, err.Error(), "not available or does not support model")
 
 	t.Logf("Error message: %s", err.Error())
 
@@ -1160,8 +1160,8 @@ func TestSelectedChannelsSelector_MultipleChannelsNotFound(t *testing.T) {
 	result, err := filteredSelector.Select(ctx, req)
 	require.Error(t, err)
 	assert.Nil(t, result)
-	assert.Contains(t, err.Error(), "指定的渠道 IDs")
-	assert.Contains(t, err.Error(), "中没有可用的渠道支持模型")
+	assert.Contains(t, err.Error(), "specified channel IDs")
+	assert.Contains(t, err.Error(), "not available or do not support model")
 
 	t.Logf("Error message: %s", err.Error())
 
@@ -1265,14 +1265,14 @@ func TestSelectedChannelsSelector_ValidateErrorMessages(t *testing.T) {
 			channelIDs:    []int{999},
 			model:         "gpt-4",
 			expectError:   true,
-			errorContains: []string{"指定的渠道 ID", "999", "不可用或不支持模型", "gpt-4"},
+			errorContains: []string{"specified channel ID", "999", "not available or does not support model", "gpt-4"},
 		},
 		{
 			name:          "Multiple invalid channels",
 			channelIDs:    []int{998, 999},
 			model:         "gpt-4",
 			expectError:   true,
-			errorContains: []string{"指定的渠道 IDs", "中没有可用的渠道支持模型", "gpt-4"},
+			errorContains: []string{"specified channel IDs", "not available or do not support model", "gpt-4"},
 		},
 		{
 			name:          "Unsupported model",

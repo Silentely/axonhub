@@ -79,9 +79,9 @@ func (s *SelectedChannelsSelector) Select(ctx context.Context, req *llm.Request)
 
 		// 否则是指定的渠道ID不存在或不支持该模型
 		if len(s.allowedChannelIDs) == 1 {
-			return nil, fmt.Errorf("指定的渠道 ID %d 不可用或不支持模型 %s", s.allowedChannelIDs[0], req.Model)
+			return nil, fmt.Errorf("%w: specified channel ID %d is not available or does not support model %s", biz.ErrChannelNotAvailable, s.allowedChannelIDs[0], req.Model)
 		}
-		return nil, fmt.Errorf("指定的渠道 IDs %v 中没有可用的渠道支持模型 %s", s.allowedChannelIDs, req.Model)
+		return nil, fmt.Errorf("%w: specified channel IDs %v are not available or do not support model %s", biz.ErrChannelNotAvailable, s.allowedChannelIDs, req.Model)
 	}
 
 	return filtered, nil

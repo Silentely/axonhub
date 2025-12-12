@@ -1081,11 +1081,11 @@ func TestChatCompletionProcessor_WithSpecifiedChannelID_InvalidChannel(t *testin
 
 	// Verify error
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "指定的渠道 ID", "Error should contain Chinese message about specified channel ID")
+	assert.Contains(t, err.Error(), "specified channel ID", "Error should contain message about specified channel ID")
 	assert.Contains(t, err.Error(), "9999", "Error should contain the invalid channel ID")
-	assert.Contains(t, err.Error(), "不可用或不支持模型", "Error should mention channel unavailable or model not supported")
+	assert.Contains(t, err.Error(), "not available or does not support model", "Error should mention channel unavailable or model not supported")
 
-	t.Logf("✅ Correctly returned Chinese error for invalid channel: %v", err)
+	t.Logf("✅ Correctly returned error for invalid channel: %v", err)
 }
 
 // TestChatCompletionProcessor_ChannelPriority_URLOverridesProfile tests that URL-specified

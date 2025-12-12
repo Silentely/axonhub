@@ -1,4 +1,4 @@
-import { Copy, Eye, EyeOff, AlertTriangle } from 'lucide-react'
+import { Copy, Eye, EyeOff, AlertTriangle, Info, Target, MapPin, Lightbulb } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -46,7 +46,7 @@ export function ApiKeysViewDialog() {
           </AlertDescription>
         </Alert>
 
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-auto flex-1">
           <div>
             <label className="text-sm font-medium">{t('apikeys.columns.name')}</label>
             <div className="mt-1 p-3 bg-muted rounded-md">
@@ -82,6 +82,48 @@ export function ApiKeysViewDialog() {
               </Button>
             </div>
           </div>
+
+          <Alert className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+            <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <AlertDescription className="text-blue-800 dark:text-blue-200">
+              <div className="space-y-4">
+                {/* Title and Description */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Target className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <p className="font-semibold">{t('apikeys.dialogs.view.channelUsage.title')}</p>
+                  </div>
+                  <p className="text-sm">{t('apikeys.dialogs.view.channelUsage.description')}</p>
+                </div>
+
+                {/* How to Find ID Section */}
+                <div className="space-y-2 pt-2 border-t border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <p className="font-semibold text-sm">{t('apikeys.dialogs.view.channelUsage.howToFindId')}</p>
+                  </div>
+                  <ol className="text-sm space-y-1.5 ml-6 list-decimal">
+                    <li>{t('apikeys.dialogs.view.channelUsage.step1')}</li>
+                    <li>{t('apikeys.dialogs.view.channelUsage.step2')}</li>
+                    <li>{t('apikeys.dialogs.view.channelUsage.step3')}</li>
+                  </ol>
+                </div>
+
+                {/* Example Section */}
+                <div className="space-y-2 pt-2 border-t border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-2">
+                    <Lightbulb className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <p className="font-semibold text-sm">{t('apikeys.dialogs.view.channelUsage.exampleTitle')}</p>
+                  </div>
+                  <div className="p-3 bg-blue-100/50 dark:bg-blue-900/30 rounded-md">
+                    <code className="text-sm break-all font-sans">
+                      {t('apikeys.dialogs.view.channelUsage.example', { key: selectedApiKey?.key || 'your-api-key' })}
+                    </code>
+                  </div>
+                </div>
+              </div>
+            </AlertDescription>
+          </Alert>
         </div>
       </DialogContent>
     </Dialog>

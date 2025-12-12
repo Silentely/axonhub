@@ -32,9 +32,10 @@ type PersistenceState struct {
 	RequestExec *ent.RequestExecution
 
 	// Channel state
-	Channels       []*biz.Channel
-	CurrentChannel *biz.Channel
-	ChannelIndex   int
+	Channels          []*biz.Channel
+	CurrentChannel    *biz.Channel
+	ChannelIndex      int
+	AllowedChannelIDs []int // 允许使用的渠道ID列表（来自URL#后缀或Profile配置）
 
 	Perf *biz.PerformanceRecord
 }

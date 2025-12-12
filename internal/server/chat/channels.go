@@ -70,6 +70,20 @@ func (s *SelectedChannelsSelector) Select(ctx context.Context, req *llm.Request)
 		return ok
 	})
 
+	// 验证：如果指定了渠道ID但没有找到匹配的渠道，返回友好的错误信息
+	if len(filtered) == 0 {
+		// 如果原始channels为空，说明模型本身就没有可用渠道
+		if len(channels) == 0 {
+			return nil, fmt.Errorf("%w: no channels available for model %s", biz.ErrInvalidModel, req.Model)
+		}
+
+		// 否则是指定的渠道ID不存在或不支持该模型
+		if len(s.allowedChannelIDs) == 1 {
+			return nil, fmt.Errorf("指定的渠道 ID %d 不可用或不支持模型 %s", s.allowedChannelIDs[0], req.Model)
+		}
+		return nil, fmt.Errorf("指定的渠道 IDs %v 中没有可用的渠道支持模型 %s", s.allowedChannelIDs, req.Model)
+	}
+
 	return filtered, nil
 }
 

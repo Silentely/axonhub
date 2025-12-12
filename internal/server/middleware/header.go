@@ -2,7 +2,9 @@ package middleware
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -119,4 +121,37 @@ func ExtractAPIKeyFromRequest(r *http.Request, config *APIKeyConfig) (string, er
 // ExtractAPIKeyFromRequestSimple 简化版本，使用默认配置.
 func ExtractAPIKeyFromRequestSimple(r *http.Request) (string, error) {
 	return ExtractAPIKeyFromRequest(r, nil)
+}
+
+// ParseAPIKeyWithChannel 解析包含渠道ID的API密钥格式（如：ah-xxxx#10）
+// 返回纯净的API密钥、可选的渠道ID和可能的错误。
+// 格式说明：
+//   - "ah-xxxx" -> (apiKey="ah-xxxx", channelID=nil, error=nil)
+//   - "ah-xxxx#10" -> (apiKey="ah-xxxx", channelID=10, error=nil)
+//   - "ah-xxxx#" -> (apiKey="ah-xxxx", channelID=nil, error=nil)
+//   - "ah-xxxx#abc" -> error: 无效的渠道ID
+//   - "ah-xxxx#10#20" -> error: 包含多个#分隔符
+func ParseAPIKeyWithChannel(rawKey string) (apiKey string, channelID *int, err error) {
+	parts := strings.Split(rawKey, "#")
+	if len(parts) > 2 {
+		return "", nil, errors.New("invalid API key format: multiple # separators")
+	}
+
+	apiKey = strings.TrimSpace(parts[0])
+	if apiKey == "" {
+		return "", nil, errors.New("API key cannot be empty")
+	}
+
+	if len(parts) == 2 {
+		channelIDStr := strings.TrimSpace(parts[1])
+		if channelIDStr != "" {
+			id, parseErr := strconv.Atoi(channelIDStr)
+			if parseErr != nil {
+				return "", nil, fmt.Errorf("invalid channel ID: %s", channelIDStr)
+			}
+			channelID = &id
+		}
+	}
+
+	return apiKey, channelID, nil
 }

@@ -1108,3 +1108,204 @@ func TestSelectedChannelsSelector_WithEmptyFilter(t *testing.T) {
 	assert.Contains(t, channelIDs, channels[1].ID)
 	assert.Contains(t, channelIDs, channels[2].ID)
 }
+
+// TestSelectedChannelsSelector_SingleChannelNotFound tests error when single specified channel is not available.
+func TestSelectedChannelsSelector_SingleChannelNotFound(t *testing.T) {
+	ctx, client := setupTest(t)
+
+	channels := createTestChannels(t, ctx, client)
+
+	channelService := newTestChannelServiceForChannels(client)
+	baseSelector := NewDefaultSelector(channelService)
+
+	req := &llm.Request{
+		Model: "gpt-4",
+	}
+
+	// Specify a non-existent channel ID
+	nonExistentID := 9999
+	filteredSelector := NewSelectedChannelsSelector(baseSelector, []int{nonExistentID})
+
+	result, err := filteredSelector.Select(ctx, req)
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "指定的渠道 ID")
+	assert.Contains(t, err.Error(), "9999")
+	assert.Contains(t, err.Error(), "不可用或不支持模型")
+
+	t.Logf("Error message: %s", err.Error())
+
+	// Verify that channels were available, just not the one we specified
+	assert.NotNil(t, channels)
+	assert.Greater(t, len(channels), 0)
+}
+
+// TestSelectedChannelsSelector_MultipleChannelsNotFound tests error when multiple specified channels are not available.
+func TestSelectedChannelsSelector_MultipleChannelsNotFound(t *testing.T) {
+	ctx, client := setupTest(t)
+
+	channels := createTestChannels(t, ctx, client)
+
+	channelService := newTestChannelServiceForChannels(client)
+	baseSelector := NewDefaultSelector(channelService)
+
+	req := &llm.Request{
+		Model: "gpt-4",
+	}
+
+	// Specify multiple non-existent channel IDs
+	nonExistentIDs := []int{9998, 9999}
+	filteredSelector := NewSelectedChannelsSelector(baseSelector, nonExistentIDs)
+
+	result, err := filteredSelector.Select(ctx, req)
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "指定的渠道 IDs")
+	assert.Contains(t, err.Error(), "中没有可用的渠道支持模型")
+
+	t.Logf("Error message: %s", err.Error())
+
+	// Verify that channels were available, just not the ones we specified
+	assert.NotNil(t, channels)
+	assert.Greater(t, len(channels), 0)
+}
+
+// TestSelectedChannelsSelector_ModelNotSupported tests error when model itself has no available channels.
+func TestSelectedChannelsSelector_ModelNotSupported(t *testing.T) {
+	ctx, client := setupTest(t)
+
+	// Create channels but they don't support the requested model
+	_, err := client.Channel.Create().
+		SetType(channel.TypeOpenai).
+		SetName("Limited Channel").
+		SetBaseURL("https://api.openai.com/v1").
+		SetCredentials(&objects.ChannelCredentials{APIKey: "test-key"}).
+		SetSupportedModels([]string{"gpt-3.5-turbo"}). // Only supports gpt-3.5-turbo
+		SetDefaultTestModel("gpt-3.5-turbo").
+		SetStatus(channel.StatusEnabled).
+		Save(ctx)
+	require.NoError(t, err)
+
+	channelService := newTestChannelServiceForChannels(client)
+	baseSelector := NewDefaultSelector(channelService)
+
+	req := &llm.Request{
+		Model: "gpt-4", // Request a model not supported by any channel
+	}
+
+	// Even without filtering, no channels support this model
+	result, err := baseSelector.Select(ctx, req)
+	require.NoError(t, err)
+	require.Empty(t, result)
+
+	// With filtering, should get a clear error message
+	filteredSelector := NewSelectedChannelsSelector(baseSelector, []int{999})
+	result, err = filteredSelector.Select(ctx, req)
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "no channels available for model")
+	assert.Contains(t, err.Error(), "gpt-4")
+
+	t.Logf("Error message: %s", err.Error())
+}
+
+// TestSelectedChannelsSelector_PartialMatch tests that only matching channels are returned.
+func TestSelectedChannelsSelector_PartialMatch(t *testing.T) {
+	ctx, client := setupTest(t)
+
+	channels := createTestChannels(t, ctx, client)
+
+	channelService := newTestChannelServiceForChannels(client)
+	baseSelector := NewDefaultSelector(channelService)
+
+	req := &llm.Request{
+		Model: "gpt-4",
+	}
+
+	// Specify mix of existing and non-existing channel IDs
+	mixedIDs := []int{channels[0].ID, 9999, channels[2].ID, 8888}
+	filteredSelector := NewSelectedChannelsSelector(baseSelector, mixedIDs)
+
+	result, err := filteredSelector.Select(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, result, 2) // Should return only the 2 existing channels
+
+	// Verify only the existing channels are returned
+	channelIDs := make([]int, len(result))
+	for i, ch := range result {
+		channelIDs[i] = ch.ID
+	}
+
+	assert.Contains(t, channelIDs, channels[0].ID)
+	assert.Contains(t, channelIDs, channels[2].ID)
+	assert.NotContains(t, channelIDs, 9999)
+	assert.NotContains(t, channelIDs, 8888)
+
+	t.Logf("Requested IDs: %v, Returned IDs: %v", mixedIDs, channelIDs)
+}
+
+// TestSelectedChannelsSelector_ValidateErrorMessages tests that error messages are user-friendly.
+func TestSelectedChannelsSelector_ValidateErrorMessages(t *testing.T) {
+	ctx, client := setupTest(t)
+
+	createTestChannels(t, ctx, client)
+
+	channelService := newTestChannelServiceForChannels(client)
+	baseSelector := NewDefaultSelector(channelService)
+
+	testCases := []struct {
+		name           string
+		channelIDs     []int
+		model          string
+		expectError    bool
+		errorContains  []string
+	}{
+		{
+			name:          "Single invalid channel",
+			channelIDs:    []int{999},
+			model:         "gpt-4",
+			expectError:   true,
+			errorContains: []string{"指定的渠道 ID", "999", "不可用或不支持模型", "gpt-4"},
+		},
+		{
+			name:          "Multiple invalid channels",
+			channelIDs:    []int{998, 999},
+			model:         "gpt-4",
+			expectError:   true,
+			errorContains: []string{"指定的渠道 IDs", "中没有可用的渠道支持模型", "gpt-4"},
+		},
+		{
+			name:          "Unsupported model",
+			channelIDs:    []int{999},
+			model:         "unsupported-model",
+			expectError:   true,
+			errorContains: []string{"no channels available for model", "unsupported-model"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			filteredSelector := NewSelectedChannelsSelector(baseSelector, tc.channelIDs)
+
+			req := &llm.Request{
+				Model: tc.model,
+			}
+
+			result, err := filteredSelector.Select(ctx, req)
+
+			if tc.expectError {
+				require.Error(t, err)
+				assert.Nil(t, result)
+
+				for _, expected := range tc.errorContains {
+					assert.Contains(t, err.Error(), expected, "Error message should contain: %s", expected)
+				}
+
+				t.Logf("Test case '%s' error message: %s", tc.name, err.Error())
+			} else {
+				require.NoError(t, err)
+				assert.NotNil(t, result)
+			}
+		})
+	}
+}

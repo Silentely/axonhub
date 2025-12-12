@@ -22,6 +22,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { ServerSidePagination } from '@/components/server-side-pagination'
 import { formatDuration } from '@/utils/format-duration'
+import { extractNumberID } from '@/lib/utils'
 import { useChannels } from '../context/channels-context'
 import { Channel, ChannelConnection } from '../data/schema'
 import { CHANNEL_CONFIGS } from '../data/config_channels'
@@ -288,6 +289,10 @@ export function ChannelsTable({
                               <div className='space-y-3'>
                                 <h4 className='text-sm font-semibold'>{t('channels.expandedRow.basicInfo')}</h4>
                                 <div className='space-y-2 text-sm'>
+                                  <div className='flex justify-between items-center'>
+                                    <span className='text-muted-foreground'>{t('channels.expandedRow.channelId')}:</span>
+                                    <span className='font-mono text-xs'>#{extractNumberID(channel.id)}</span>
+                                  </div>
                                   <div className='flex justify-between gap-4'>
                                     <span className='text-muted-foreground shrink-0'>{t('channels.columns.baseURL')}:</span>
                                     <span className='font-mono text-xs break-all text-right'>

@@ -123,3 +123,23 @@ func GetProjectID(ctx context.Context) (int, bool) {
 
 	return 0, false
 }
+
+// WithSpecifiedChannelID stores the specified channel ID in the context.
+// 此渠道ID来自API密钥后缀（如：ah-xxx#10），用于限制请求仅使用特定渠道。
+func WithSpecifiedChannelID(ctx context.Context, channelID int) context.Context {
+	container := getContainer(ctx)
+	container.SpecifiedChannelID = &channelID
+
+	return withContainer(ctx, container)
+}
+
+// GetSpecifiedChannelID retrieves the specified channel ID from the context.
+// 返回值：(channelID, found)
+func GetSpecifiedChannelID(ctx context.Context) (int, bool) {
+	container := getContainer(ctx)
+	if container.SpecifiedChannelID != nil {
+		return *container.SpecifiedChannelID, true
+	}
+
+	return 0, false
+}

@@ -86,12 +86,12 @@ func setupTestServices(t *testing.T, client *ent.Client) (*biz.ChannelService, *
 }
 
 // createTestChannel creates a test channel in the database.
-func createTestChannel(t *testing.T, ctx context.Context, client *ent.Client) *ent.Channel {
+func createTestChannel(t *testing.T, ctx context.Context, client *ent.Client, name string) *ent.Channel {
 	t.Helper()
 
 	ch, err := client.Channel.Create().
 		SetType(channel.TypeOpenai).
-		SetName("Test OpenAI Channel").
+		SetName(name).
 		SetBaseURL("https://api.openai.com/v1").
 		SetCredentials(&objects.ChannelCredentials{APIKey: "test-api-key"}).
 		SetSupportedModels([]string{"gpt-4", "gpt-3.5-turbo"}).
@@ -180,7 +180,7 @@ func TestChatCompletionProcessor_Process_NonStreaming(t *testing.T) {
 
 	// Setup
 	project := createTestProject(t, ctx, client)
-	ch := createTestChannel(t, ctx, client)
+	ch := createTestChannel(t, ctx, client, "Non-Streaming Test Channel")
 	channelService, requestService, systemService, usageLogService := setupTestServices(t, client)
 
 	// Create mock executor with response
@@ -284,7 +284,7 @@ func TestChatCompletionProcessor_Process_Streaming(t *testing.T) {
 
 	// Setup
 	project := createTestProject(t, ctx, client)
-	ch := createTestChannel(t, ctx, client)
+	ch := createTestChannel(t, ctx, client, "Streaming Test Channel")
 	channelService, requestService, systemService, usageLogService := setupTestServices(t, client)
 
 	// Create mock stream events
@@ -392,7 +392,7 @@ func TestChatCompletionProcessor_Process_WithModelMapping(t *testing.T) {
 
 	// Setup
 	project := createTestProject(t, ctx, client)
-	ch := createTestChannel(t, ctx, client)
+	ch := createTestChannel(t, ctx, client, "Model Mapping Test Channel")
 	channelService, requestService, systemService, usageLogService := setupTestServices(t, client)
 
 	// Create a user for the API key
@@ -496,7 +496,7 @@ func TestChatCompletionProcessor_Process_ErrorHandling(t *testing.T) {
 
 	// Setup
 	project := createTestProject(t, ctx, client)
-	ch := createTestChannel(t, ctx, client)
+	ch := createTestChannel(t, ctx, client, "Error Handling Test Channel")
 	channelService, requestService, systemService, usageLogService := setupTestServices(t, client)
 
 	// Create mock executor that returns an error
@@ -670,7 +670,7 @@ func TestChatCompletionProcessor_Process_ConnectionTracking(t *testing.T) {
 
 	// Setup
 	project := createTestProject(t, ctx, client)
-	ch := createTestChannel(t, ctx, client)
+	ch := createTestChannel(t, ctx, client, "Connection Tracking Test Channel")
 	channelService, requestService, systemService, usageLogService := setupTestServices(t, client)
 
 	// Create mock executor
@@ -799,7 +799,7 @@ func TestChatCompletionProcessor_Process_InvalidRequest(t *testing.T) {
 
 	// Setup
 	project := createTestProject(t, ctx, client)
-	ch := createTestChannel(t, ctx, client)
+	ch := createTestChannel(t, ctx, client, "Invalid Request Test Channel")
 	channelService, requestService, systemService, usageLogService := setupTestServices(t, client)
 
 	executor := &mockExecutor{}
@@ -861,7 +861,7 @@ func TestChatCompletionProcessor_Process_MultipleRequests(t *testing.T) {
 
 	// Setup
 	project := createTestProject(t, ctx, client)
-	ch := createTestChannel(t, ctx, client)
+	ch := createTestChannel(t, ctx, client, "Multiple Requests Test Channel")
 	channelService, requestService, systemService, usageLogService := setupTestServices(t, client)
 
 	requestCount := 0
@@ -932,4 +932,479 @@ func TestChatCompletionProcessor_Process_MultipleRequests(t *testing.T) {
 	usageLogs, err := client.UsageLog.Query().All(ctx)
 	require.NoError(t, err)
 	assert.Len(t, usageLogs, 3)
+}
+
+// TestChatCompletionProcessor_WithSpecifiedChannelID_ValidChannel tests that when a valid channel ID
+// is specified through the context, only that channel is used for the request.
+func TestChatCompletionProcessor_WithSpecifiedChannelID_ValidChannel(t *testing.T) {
+	// Setup test environment
+	ctx := context.Background()
+	ctx = privacy.DecisionContext(ctx, privacy.Allow)
+
+	client := enttest.NewEntClient(t, "sqlite3", "file:ent?mode=memory&_fk=0")
+	t.Cleanup(func() { client.Close() })
+	ctx = ent.NewContext(ctx, client)
+
+	channelService, requestService, systemService, usageLogService := setupTestServices(t, client)
+
+	// Create three test channels with known IDs
+	ch1 := createTestChannel(t, ctx, client, "Valid Channel Test - Alternative Ch1")
+	ch2 := createTestChannel(t, ctx, client, "Valid Channel Test - Specified Ch2")
+	ch3 := createTestChannel(t, ctx, client, "Valid Channel Test - Alternative Ch3")
+
+	t.Logf("Created channels: ch1=%d, ch2=%d, ch3=%d", ch1.ID, ch2.ID, ch3.ID)
+
+	// Specify that we want to use ch2 only
+	ctx = contexts.WithSpecifiedChannelID(ctx, ch2.ID)
+
+	// Create outbound transformers for each channel
+	outbound1, err := openai.NewOutboundTransformer(ch1.BaseURL, ch1.Credentials.APIKey)
+	require.NoError(t, err)
+	outbound2, err := openai.NewOutboundTransformer(ch2.BaseURL, ch2.Credentials.APIKey)
+	require.NoError(t, err)
+	outbound3, err := openai.NewOutboundTransformer(ch3.BaseURL, ch3.Credentials.APIKey)
+	require.NoError(t, err)
+
+	// Setup processor with static selector that includes all channels
+	staticSelector := &staticChannelSelector{
+		channels: []*biz.Channel{
+			{Channel: ch1, Outbound: outbound1},
+			{Channel: ch2, Outbound: outbound2},
+			{Channel: ch3, Outbound: outbound3},
+		},
+	}
+
+	executor := &mockExecutor{}
+	processor := &ChatCompletionProcessor{
+		channelSelector:   staticSelector,
+		Inbound:           openai.NewInboundTransformer(),
+		RequestService:    requestService,
+		ChannelService:    channelService,
+		SystemService:     systemService,
+		UsageLogService:   usageLogService,
+		PipelineFactory:   pipeline.NewFactory(executor),
+		ModelMapper:       NewModelMapper(),
+		connectionTracker: NewDefaultConnectionTracker(1024),
+		Middlewares: []pipeline.Middleware{
+			stream.EnsureUsage(),
+		},
+	}
+
+	// Prepare mock response
+	respID := lo.RandomString(10, lo.LettersCharset)
+	mockResp := buildMockOpenAIResponse(respID, "gpt-4", "Test response", 10, 20)
+	executor.response = &httpclient.Response{
+		StatusCode: 200,
+		Body:       mockResp,
+		Headers:    http.Header{"Content-Type": []string{"application/json"}},
+	}
+
+	// Process request
+	httpRequest := buildTestRequest("gpt-4", "Test message", false)
+	result, err := processor.Process(ctx, httpRequest)
+
+	// Verify success
+	require.NoError(t, err)
+	assert.NotNil(t, result.ChatCompletion)
+
+	// Verify that only ch2 was used
+	requests, err := client.Request.Query().WithChannel().All(ctx)
+	require.NoError(t, err)
+	require.Len(t, requests, 1)
+	assert.Equal(t, ch2.ID, requests[0].ChannelID, "Should use the specified channel ch2")
+
+	// Verify request execution
+	executions, err := client.RequestExecution.Query().All(ctx)
+	require.NoError(t, err)
+	require.Len(t, executions, 1)
+	assert.Equal(t, ch2.ID, executions[0].ChannelID, "Execution should use the specified channel ch2")
+
+	t.Logf("✅ Successfully used specified channel: ch2=%d", ch2.ID)
+}
+
+// TestChatCompletionProcessor_WithSpecifiedChannelID_InvalidChannel tests that when an invalid
+// channel ID is specified, the request fails with a Chinese error message.
+func TestChatCompletionProcessor_WithSpecifiedChannelID_InvalidChannel(t *testing.T) {
+	// Setup test environment
+	ctx := context.Background()
+	ctx = privacy.DecisionContext(ctx, privacy.Allow)
+
+	client := enttest.NewEntClient(t, "sqlite3", "file:ent?mode=memory&_fk=0")
+	t.Cleanup(func() { client.Close() })
+	ctx = ent.NewContext(ctx, client)
+
+	channelService, requestService, systemService, usageLogService := setupTestServices(t, client)
+
+	// Create test channels
+	ch1 := createTestChannel(t, ctx, client, "Invalid Channel Test - Existing Ch1")
+	ch2 := createTestChannel(t, ctx, client, "Invalid Channel Test - Existing Ch2")
+
+	t.Logf("Created channels: ch1=%d, ch2=%d", ch1.ID, ch2.ID)
+
+	// Specify a non-existent channel ID
+	nonExistentID := 9999
+	ctx = contexts.WithSpecifiedChannelID(ctx, nonExistentID)
+
+	// Create outbound transformers for each channel
+	outbound1, err := openai.NewOutboundTransformer(ch1.BaseURL, ch1.Credentials.APIKey)
+	require.NoError(t, err)
+	outbound2, err := openai.NewOutboundTransformer(ch2.BaseURL, ch2.Credentials.APIKey)
+	require.NoError(t, err)
+
+	// Setup processor
+	staticSelector := &staticChannelSelector{
+		channels: []*biz.Channel{
+			{Channel: ch1, Outbound: outbound1},
+			{Channel: ch2, Outbound: outbound2},
+		},
+	}
+
+	executor := &mockExecutor{}
+	processor := &ChatCompletionProcessor{
+		channelSelector:   staticSelector,
+		Inbound:           openai.NewInboundTransformer(),
+		RequestService:    requestService,
+		ChannelService:    channelService,
+		SystemService:     systemService,
+		UsageLogService:   usageLogService,
+		PipelineFactory:   pipeline.NewFactory(executor),
+		ModelMapper:       NewModelMapper(),
+		connectionTracker: NewDefaultConnectionTracker(1024),
+		Middlewares: []pipeline.Middleware{
+			stream.EnsureUsage(),
+		},
+	}
+
+	// Process request - should fail
+	httpRequest := buildTestRequest("gpt-4", "Test message", false)
+	_, err = processor.Process(ctx, httpRequest)
+
+	// Verify error
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "指定的渠道 ID", "Error should contain Chinese message about specified channel ID")
+	assert.Contains(t, err.Error(), "9999", "Error should contain the invalid channel ID")
+	assert.Contains(t, err.Error(), "不可用或不支持模型", "Error should mention channel unavailable or model not supported")
+
+	t.Logf("✅ Correctly returned Chinese error for invalid channel: %v", err)
+}
+
+// TestChatCompletionProcessor_ChannelPriority_URLOverridesProfile tests that URL-specified
+// channel ID has higher priority than API key profile settings.
+func TestChatCompletionProcessor_ChannelPriority_URLOverridesProfile(t *testing.T) {
+	// Setup test environment
+	ctx := context.Background()
+	ctx = privacy.DecisionContext(ctx, privacy.Allow)
+
+	client := enttest.NewEntClient(t, "sqlite3", "file:ent?mode=memory&_fk=0")
+	t.Cleanup(func() { client.Close() })
+	ctx = ent.NewContext(ctx, client)
+
+	channelService, requestService, systemService, usageLogService := setupTestServices(t, client)
+
+	// Create test channels
+	ch1 := createTestChannel(t, ctx, client, "Priority Test - Profile Allowed Ch1")
+	ch2 := createTestChannel(t, ctx, client, "Priority Test - Profile Allowed Ch2")
+	ch3 := createTestChannel(t, ctx, client, "Priority Test - URL Override Ch3")
+
+	t.Logf("Created channels: ch1=%d, ch2=%d, ch3=%d", ch1.ID, ch2.ID, ch3.ID)
+
+	// Create API key with profile that allows ch1 and ch2
+	user, err := client.User.Create().
+		SetEmail("test@example.com").
+		SetPassword("password123").
+		SetFirstName("Test").
+		SetLastName("User").
+		Save(ctx)
+	require.NoError(t, err)
+
+	apiKey, err := client.APIKey.Create().
+		SetName("Test API Key").
+		SetKey("ah-test-key").
+		SetUserID(user.ID).
+		SetProfiles(&objects.APIKeyProfiles{
+			ActiveProfile: "default",
+			Profiles: []objects.APIKeyProfile{
+				{
+					Name:       "default",
+					ChannelIDs: []int{ch1.ID, ch2.ID}, // Profile allows ch1 and ch2
+				},
+			},
+		}).
+		Save(ctx)
+	require.NoError(t, err)
+
+	// Add API key to context
+	ctx = contexts.WithAPIKey(ctx, apiKey)
+
+	// Specify ch3 through URL (should override profile)
+	ctx = contexts.WithSpecifiedChannelID(ctx, ch3.ID)
+
+	// Create outbound transformers for each channel
+	outbound1, err := openai.NewOutboundTransformer(ch1.BaseURL, ch1.Credentials.APIKey)
+	require.NoError(t, err)
+	outbound2, err := openai.NewOutboundTransformer(ch2.BaseURL, ch2.Credentials.APIKey)
+	require.NoError(t, err)
+	outbound3, err := openai.NewOutboundTransformer(ch3.BaseURL, ch3.Credentials.APIKey)
+	require.NoError(t, err)
+
+	// Setup processor
+	staticSelector := &staticChannelSelector{
+		channels: []*biz.Channel{
+			{Channel: ch1, Outbound: outbound1},
+			{Channel: ch2, Outbound: outbound2},
+			{Channel: ch3, Outbound: outbound3},
+		},
+	}
+
+	executor := &mockExecutor{}
+	processor := &ChatCompletionProcessor{
+		channelSelector:   staticSelector,
+		Inbound:           openai.NewInboundTransformer(),
+		RequestService:    requestService,
+		ChannelService:    channelService,
+		SystemService:     systemService,
+		UsageLogService:   usageLogService,
+		PipelineFactory:   pipeline.NewFactory(executor),
+		ModelMapper:       NewModelMapper(),
+		connectionTracker: NewDefaultConnectionTracker(1024),
+		Middlewares: []pipeline.Middleware{
+			stream.EnsureUsage(),
+		},
+	}
+
+	// Prepare mock response
+	respID := lo.RandomString(10, lo.LettersCharset)
+	mockResp := buildMockOpenAIResponse(respID, "gpt-4", "Test response", 10, 20)
+	executor.response = &httpclient.Response{
+		StatusCode: 200,
+		Body:       mockResp,
+		Headers:    http.Header{"Content-Type": []string{"application/json"}},
+	}
+
+	// Process request
+	httpRequest := buildTestRequest("gpt-4", "Test message", false)
+	result, err := processor.Process(ctx, httpRequest)
+
+	// Verify success
+	require.NoError(t, err)
+	assert.NotNil(t, result.ChatCompletion)
+
+	// Verify that ch3 was used (URL priority overrides profile)
+	requests, err := client.Request.Query().All(ctx)
+	require.NoError(t, err)
+	require.Len(t, requests, 1)
+	assert.Equal(t, ch3.ID, requests[0].ChannelID, "Should use URL-specified ch3, not profile channels ch1/ch2")
+
+	t.Logf("✅ URL-specified channel (ch3=%d) correctly overrode profile channels (ch1=%d, ch2=%d)",
+		ch3.ID, ch1.ID, ch2.ID)
+}
+
+// TestChatCompletionProcessor_WithProfileAllowedChannels tests that when only profile
+// settings are present (no URL channel ID), the allowed channels from profile are used.
+func TestChatCompletionProcessor_WithProfileAllowedChannels(t *testing.T) {
+	// Setup test environment
+	ctx := context.Background()
+	ctx = privacy.DecisionContext(ctx, privacy.Allow)
+
+	client := enttest.NewEntClient(t, "sqlite3", "file:ent?mode=memory&_fk=0")
+	t.Cleanup(func() { client.Close() })
+	ctx = ent.NewContext(ctx, client)
+
+	channelService, requestService, systemService, usageLogService := setupTestServices(t, client)
+
+	// Create test channels
+	ch1 := createTestChannel(t, ctx, client, "Profile Only Test - Allowed Ch1")
+	ch2 := createTestChannel(t, ctx, client, "Profile Only Test - Allowed Ch2")
+	ch3 := createTestChannel(t, ctx, client, "Profile Only Test - Restricted Ch3")
+
+	t.Logf("Created channels: ch1=%d, ch2=%d, ch3=%d", ch1.ID, ch2.ID, ch3.ID)
+
+	// Create API key with profile that only allows ch1 and ch2
+	user, err := client.User.Create().
+		SetEmail("test@example.com").
+		SetPassword("password123").
+		SetFirstName("Test").
+		SetLastName("User").
+		Save(ctx)
+	require.NoError(t, err)
+
+	apiKey, err := client.APIKey.Create().
+		SetName("Test API Key").
+		SetKey("ah-test-key").
+		SetUserID(user.ID).
+		SetProfiles(&objects.APIKeyProfiles{
+			ActiveProfile: "default",
+			Profiles: []objects.APIKeyProfile{
+				{
+					Name:       "default",
+					ChannelIDs: []int{ch1.ID, ch2.ID}, // Profile only allows ch1 and ch2
+				},
+			},
+		}).
+		Save(ctx)
+	require.NoError(t, err)
+
+	// Add API key to context (no URL channel ID specified)
+	ctx = contexts.WithAPIKey(ctx, apiKey)
+
+	// Create outbound transformers for each channel
+	outbound1, err := openai.NewOutboundTransformer(ch1.BaseURL, ch1.Credentials.APIKey)
+	require.NoError(t, err)
+	outbound2, err := openai.NewOutboundTransformer(ch2.BaseURL, ch2.Credentials.APIKey)
+	require.NoError(t, err)
+	outbound3, err := openai.NewOutboundTransformer(ch3.BaseURL, ch3.Credentials.APIKey)
+	require.NoError(t, err)
+
+	// Setup processor
+	staticSelector := &staticChannelSelector{
+		channels: []*biz.Channel{
+			{Channel: ch1, Outbound: outbound1},
+			{Channel: ch2, Outbound: outbound2},
+			{Channel: ch3, Outbound: outbound3},
+		},
+	}
+
+	executor := &mockExecutor{}
+	processor := &ChatCompletionProcessor{
+		channelSelector:   staticSelector,
+		Inbound:           openai.NewInboundTransformer(),
+		RequestService:    requestService,
+		ChannelService:    channelService,
+		SystemService:     systemService,
+		UsageLogService:   usageLogService,
+		PipelineFactory:   pipeline.NewFactory(executor),
+		ModelMapper:       NewModelMapper(),
+		connectionTracker: NewDefaultConnectionTracker(1024),
+		Middlewares: []pipeline.Middleware{
+			stream.EnsureUsage(),
+		},
+	}
+
+	// Prepare mock response
+	respID := lo.RandomString(10, lo.LettersCharset)
+	mockResp := buildMockOpenAIResponse(respID, "gpt-4", "Test response", 10, 20)
+	executor.response = &httpclient.Response{
+		StatusCode: 200,
+		Body:       mockResp,
+		Headers:    http.Header{"Content-Type": []string{"application/json"}},
+	}
+
+	// Process request
+	httpRequest := buildTestRequest("gpt-4", "Test message", false)
+	result, err := processor.Process(ctx, httpRequest)
+
+	// Verify success
+	require.NoError(t, err)
+	assert.NotNil(t, result.ChatCompletion)
+
+	// Verify that only ch1 or ch2 was used (not ch3)
+	requests, err := client.Request.Query().All(ctx)
+	require.NoError(t, err)
+	require.Len(t, requests, 1)
+	usedChannelID := requests[0].ChannelID
+	assert.Contains(t, []int{ch1.ID, ch2.ID}, usedChannelID, "Should use one of profile-allowed channels (ch1 or ch2)")
+	assert.NotEqual(t, ch3.ID, usedChannelID, "Should NOT use ch3 as it's not in profile")
+
+	t.Logf("✅ Profile-allowed channels correctly restricted: used ch%d (allowed: ch1=%d, ch2=%d, excluded: ch3=%d)",
+		usedChannelID, ch1.ID, ch2.ID, ch3.ID)
+}
+
+// TestChatCompletionProcessor_NoRestrictions_UsesAllChannels tests that when no channel
+// restrictions are specified (no URL ID, no profile settings), all available channels can be used.
+func TestChatCompletionProcessor_NoRestrictions_UsesAllChannels(t *testing.T) {
+	// Setup test environment
+	ctx := context.Background()
+	ctx = privacy.DecisionContext(ctx, privacy.Allow)
+
+	client := enttest.NewEntClient(t, "sqlite3", "file:ent?mode=memory&_fk=0")
+	t.Cleanup(func() { client.Close() })
+	ctx = ent.NewContext(ctx, client)
+
+	channelService, requestService, systemService, usageLogService := setupTestServices(t, client)
+
+	// Create test channels
+	ch1 := createTestChannel(t, ctx, client, "No Restrictions Test - Available Ch1")
+	ch2 := createTestChannel(t, ctx, client, "No Restrictions Test - Available Ch2")
+	ch3 := createTestChannel(t, ctx, client, "No Restrictions Test - Available Ch3")
+
+	t.Logf("Created channels: ch1=%d, ch2=%d, ch3=%d", ch1.ID, ch2.ID, ch3.ID)
+
+	// Create API key WITHOUT profile settings
+	user, err := client.User.Create().
+		SetEmail("test@example.com").
+		SetPassword("password123").
+		SetFirstName("Test").
+		SetLastName("User").
+		Save(ctx)
+	require.NoError(t, err)
+
+	apiKey, err := client.APIKey.Create().
+		SetName("Test API Key").
+		SetKey("ah-test-key").
+		SetUserID(user.ID).
+		Save(ctx)
+	require.NoError(t, err)
+
+	// Add API key to context (no URL channel ID, no profile settings)
+	ctx = contexts.WithAPIKey(ctx, apiKey)
+
+	// Create outbound transformers for each channel
+	outbound1, err := openai.NewOutboundTransformer(ch1.BaseURL, ch1.Credentials.APIKey)
+	require.NoError(t, err)
+	outbound2, err := openai.NewOutboundTransformer(ch2.BaseURL, ch2.Credentials.APIKey)
+	require.NoError(t, err)
+	outbound3, err := openai.NewOutboundTransformer(ch3.BaseURL, ch3.Credentials.APIKey)
+	require.NoError(t, err)
+
+	// Setup processor
+	staticSelector := &staticChannelSelector{
+		channels: []*biz.Channel{
+			{Channel: ch1, Outbound: outbound1},
+			{Channel: ch2, Outbound: outbound2},
+			{Channel: ch3, Outbound: outbound3},
+		},
+	}
+
+	executor := &mockExecutor{}
+	processor := &ChatCompletionProcessor{
+		channelSelector:   staticSelector,
+		Inbound:           openai.NewInboundTransformer(),
+		RequestService:    requestService,
+		ChannelService:    channelService,
+		SystemService:     systemService,
+		UsageLogService:   usageLogService,
+		PipelineFactory:   pipeline.NewFactory(executor),
+		ModelMapper:       NewModelMapper(),
+		connectionTracker: NewDefaultConnectionTracker(1024),
+		Middlewares: []pipeline.Middleware{
+			stream.EnsureUsage(),
+		},
+	}
+
+	// Prepare mock response
+	respID := lo.RandomString(10, lo.LettersCharset)
+	mockResp := buildMockOpenAIResponse(respID, "gpt-4", "Test response", 10, 20)
+	executor.response = &httpclient.Response{
+		StatusCode: 200,
+		Body:       mockResp,
+		Headers:    http.Header{"Content-Type": []string{"application/json"}},
+	}
+
+	// Process request
+	httpRequest := buildTestRequest("gpt-4", "Test message", false)
+	result, err := processor.Process(ctx, httpRequest)
+
+	// Verify success
+	require.NoError(t, err)
+	assert.NotNil(t, result.ChatCompletion)
+
+	// Verify that any of the channels could be used (no restrictions)
+	requests, err := client.Request.Query().All(ctx)
+	require.NoError(t, err)
+	require.Len(t, requests, 1)
+	usedChannelID := requests[0].ChannelID
+	assert.Contains(t, []int{ch1.ID, ch2.ID, ch3.ID}, usedChannelID, "Should use any of the available channels")
+
+	t.Logf("✅ Without restrictions, any channel can be used: used ch%d (available: ch1=%d, ch2=%d, ch3=%d)",
+		usedChannelID, ch1.ID, ch2.ID, ch3.ID)
 }

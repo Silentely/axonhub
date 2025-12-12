@@ -339,7 +339,17 @@
       "view": {
         "title": "查看 API 密钥",
         "description": "查看完整的 API 密钥详情。",
-        "warning": "  请妥善保管您的 API 密钥，不要与未授权的人员分享。任何拥有此密钥的人都可以代表您发出请求。"
+        "warning": "  请妥善保管您的 API 密钥，不要与未授权的人员分享。任何拥有此密钥的人都可以代表您发出请求。",
+        "channelUsage": {
+          "title": "指定渠道ID使用",
+          "description": "您可以通过在 API 密钥后面添加 #渠道ID 的方式指定使用特定渠道。这将限制请求仅使用该指定的渠道。",
+          "howToFindId": "如何查找渠道ID？",
+          "step1": "前往渠道管理页面",
+          "step2": "点击要使用的渠道左侧的展开按钮",
+          "step3": "在展开的基本信息中查看渠道ID（显示格式如：#123）",
+          "exampleTitle": "使用示例",
+          "example": "{{key}}#10"
+        }
       },
       "bulkDisable": {
         "title": "批量禁用 API Keys",
@@ -1074,6 +1084,7 @@
     },
     "expandedRow": {
       "basicInfo": "基本信息",
+      "channelId": "渠道ID",
       "performance": "性能",
       "modelsAndRemark": "模型与备注",
       "modelInfo": "模型信息",

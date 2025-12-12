@@ -21,7 +21,8 @@ func WithAPIKeyAuth(auth *biz.AuthService) gin.HandlerFunc {
 // WithAPIKeyConfig 中间件用于验证 API key，支持自定义配置.
 func WithAPIKeyConfig(auth *biz.AuthService, config *APIKeyConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		key, err := ExtractAPIKeyFromRequest(c.Request, config)
+		// 从请求中提取原始API密钥（可能包含 #channelID 后缀）
+		rawKey, err := ExtractAPIKeyFromRequest(c.Request, config)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, objects.ErrorResponse{
 				Error: objects.Error{
@@ -33,8 +34,21 @@ func WithAPIKeyConfig(auth *biz.AuthService, config *APIKeyConfig) gin.HandlerFu
 			return
 		}
 
+		// 解析API密钥和渠道ID
+		apiKey, channelID, err := ParseAPIKeyWithChannel(rawKey)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, objects.ErrorResponse{
+				Error: objects.Error{
+					Type:    http.StatusText(http.StatusBadRequest),
+					Message: err.Error(),
+				},
+			})
+
+			return
+		}
+
 		// 查询数据库验证 API key 是否存在
-		apiKey, err := auth.AnthenticateAPIKey(c.Request.Context(), key)
+		apiKeyEntity, err := auth.AnthenticateAPIKey(c.Request.Context(), apiKey)
 		if err != nil {
 			if ent.IsNotFound(err) || errors.Is(err, biz.ErrInvalidAPIKey) {
 				c.AbortWithStatusJSON(http.StatusUnauthorized, objects.ErrorResponse{
@@ -56,10 +70,15 @@ func WithAPIKeyConfig(auth *biz.AuthService, config *APIKeyConfig) gin.HandlerFu
 		}
 
 		// 将 API key entity 保存到 context 中
-		ctx := contexts.WithAPIKey(c.Request.Context(), apiKey)
+		ctx := contexts.WithAPIKey(c.Request.Context(), apiKeyEntity)
 
-		if apiKey.Edges.Project != nil {
-			ctx = contexts.WithProjectID(ctx, apiKey.Edges.Project.ID)
+		// 如果API密钥中指定了渠道ID，保存到context中
+		if channelID != nil {
+			ctx = contexts.WithSpecifiedChannelID(ctx, *channelID)
+		}
+
+		if apiKeyEntity.Edges.Project != nil {
+			ctx = contexts.WithProjectID(ctx, apiKeyEntity.Edges.Project.ID)
 		}
 
 		c.Request = c.Request.WithContext(ctx)

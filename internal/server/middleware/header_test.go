@@ -348,3 +348,187 @@ func BenchmarkExtractAPIKeyFromRequest(b *testing.B) {
 		_, _ = ExtractAPIKeyFromRequest(req, config)
 	}
 }
+
+// TestParseAPIKeyWithChannel 测试API密钥与渠道ID解析功能.
+func TestParseAPIKeyWithChannel(t *testing.T) {
+	tests := []struct {
+		name              string
+		rawKey            string
+		expectedAPIKey    string
+		expectedChannelID *int
+		expectedErr       string
+	}{
+		{
+			name:              "正常格式 - 带渠道ID",
+			rawKey:            "ah-xxx#10",
+			expectedAPIKey:    "ah-xxx",
+			expectedChannelID: intPtr(10),
+			expectedErr:       "",
+		},
+		{
+			name:              "正常格式 - 不带渠道ID",
+			rawKey:            "ah-xxx",
+			expectedAPIKey:    "ah-xxx",
+			expectedChannelID: nil,
+			expectedErr:       "",
+		},
+		{
+			name:              "空渠道ID - 仅有#但无ID",
+			rawKey:            "ah-xxx#",
+			expectedAPIKey:    "ah-xxx",
+			expectedChannelID: nil,
+			expectedErr:       "",
+		},
+		{
+			name:              "空渠道ID - 仅有#和空格",
+			rawKey:            "ah-xxx#  ",
+			expectedAPIKey:    "ah-xxx",
+			expectedChannelID: nil,
+			expectedErr:       "",
+		},
+		{
+			name:              "无效渠道ID - 非数字",
+			rawKey:            "ah-xxx#abc",
+			expectedAPIKey:    "",
+			expectedChannelID: nil,
+			expectedErr:       "invalid channel ID: abc",
+		},
+		{
+			name:              "无效渠道ID - 包含字母和数字混合",
+			rawKey:            "ah-xxx#10abc",
+			expectedAPIKey:    "",
+			expectedChannelID: nil,
+			expectedErr:       "invalid channel ID: 10abc",
+		},
+		{
+			name:              "无效格式 - 多个#分隔符",
+			rawKey:            "ah-xxx#10#20",
+			expectedAPIKey:    "",
+			expectedChannelID: nil,
+			expectedErr:       "invalid API key format: multiple # separators",
+		},
+		{
+			name:              "无效格式 - 空密钥",
+			rawKey:            "#10",
+			expectedAPIKey:    "",
+			expectedChannelID: nil,
+			expectedErr:       "API key cannot be empty",
+		},
+		{
+			name:              "无效格式 - 仅有#",
+			rawKey:            "#",
+			expectedAPIKey:    "",
+			expectedChannelID: nil,
+			expectedErr:       "API key cannot be empty",
+		},
+		{
+			name:              "无效格式 - 空白密钥加渠道ID",
+			rawKey:            "  #10",
+			expectedAPIKey:    "",
+			expectedChannelID: nil,
+			expectedErr:       "API key cannot be empty",
+		},
+		{
+			name:              "边界情况 - 前后有空格",
+			rawKey:            "  ah-xxx#10  ",
+			expectedAPIKey:    "ah-xxx",
+			expectedChannelID: intPtr(10),
+			expectedErr:       "",
+		},
+		{
+			name:              "边界情况 - 渠道ID为0",
+			rawKey:            "ah-xxx#0",
+			expectedAPIKey:    "ah-xxx",
+			expectedChannelID: intPtr(0),
+			expectedErr:       "",
+		},
+		{
+			name:              "边界情况 - 渠道ID为大数字",
+			rawKey:            "ah-xxx#999999",
+			expectedAPIKey:    "ah-xxx",
+			expectedChannelID: intPtr(999999),
+			expectedErr:       "",
+		},
+		{
+			name:              "边界情况 - 渠道ID为负数",
+			rawKey:            "ah-xxx#-10",
+			expectedAPIKey:    "ah-xxx",
+			expectedChannelID: intPtr(-10),
+			expectedErr:       "",
+		},
+		{
+			name:              "实际密钥格式 - OpenAI风格",
+			rawKey:            "sk-proj-1234567890abcdef#5",
+			expectedAPIKey:    "sk-proj-1234567890abcdef",
+			expectedChannelID: intPtr(5),
+			expectedErr:       "",
+		},
+		{
+			name:              "实际密钥格式 - Anthropic风格",
+			rawKey:            "sk-ant-api03-1234567890#15",
+			expectedAPIKey:    "sk-ant-api03-1234567890",
+			expectedChannelID: intPtr(15),
+			expectedErr:       "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			apiKey, channelID, err := ParseAPIKeyWithChannel(tt.rawKey)
+
+			// 验证错误
+			if tt.expectedErr != "" {
+				if err == nil {
+					t.Errorf("期望错误 '%s'，但得到 nil", tt.expectedErr)
+					return
+				}
+
+				if err.Error() != tt.expectedErr {
+					t.Errorf("期望错误 '%s'，但得到 '%s'", tt.expectedErr, err.Error())
+				}
+
+				return
+			}
+
+			// 验证没有错误
+			if err != nil {
+				t.Errorf("意外的错误: %v", err)
+				return
+			}
+
+			// 验证API密钥
+			if apiKey != tt.expectedAPIKey {
+				t.Errorf("期望API密钥 '%s'，但得到 '%s'", tt.expectedAPIKey, apiKey)
+			}
+
+			// 验证渠道ID
+			if tt.expectedChannelID == nil {
+				if channelID != nil {
+					t.Errorf("期望渠道ID为 nil，但得到 %d", *channelID)
+				}
+			} else {
+				if channelID == nil {
+					t.Errorf("期望渠道ID为 %d，但得到 nil", *tt.expectedChannelID)
+				} else if *channelID != *tt.expectedChannelID {
+					t.Errorf("期望渠道ID为 %d，但得到 %d", *tt.expectedChannelID, *channelID)
+				}
+			}
+		})
+	}
+}
+
+// BenchmarkParseAPIKeyWithChannel 性能测试.
+func BenchmarkParseAPIKeyWithChannel(b *testing.B) {
+	rawKey := "ah-xxx#10"
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, _, _ = ParseAPIKeyWithChannel(rawKey)
+	}
+}
+
+// intPtr 辅助函数，返回int指针.
+func intPtr(i int) *int {
+	return &i
+}

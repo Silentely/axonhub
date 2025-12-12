@@ -115,17 +115,38 @@ func (processor *ChatCompletionProcessor) Process(ctx context.Context, request *
 		log.Debug(ctx, "request received", log.String("request_body", string(request.Body)))
 	}
 
+	// 确定允许使用的渠道ID列表
+	// 优先级：URL指定 > Profile配置 > 全部渠道
+	var allowedChannelIDs []int
+
+	// 优先级1: 从URL中指定的渠道ID（如：ah-xxx#10）
+	if specifiedChannelID, hasSpecified := contexts.GetSpecifiedChannelID(ctx); hasSpecified {
+		allowedChannelIDs = []int{specifiedChannelID}
+		log.Debug(ctx, "Using specified channel from URL", log.Int("channel_id", specifiedChannelID))
+	} else if apiKey != nil && apiKey.Profiles != nil {
+		// 优先级2: 从API Key的活动Profile中获取
+		activeProfile := getActiveProfile(apiKey.Profiles)
+		if activeProfile != nil && len(activeProfile.ChannelIDs) > 0 {
+			allowedChannelIDs = activeProfile.ChannelIDs
+			log.Debug(ctx, "Using channels from active profile",
+				log.String("profile", activeProfile.Name),
+				log.Any("channel_ids", allowedChannelIDs))
+		}
+	}
+	// 优先级3: 如果都没有，allowedChannelIDs保持为空，使用所有可用渠道（默认行为）
+
 	state := &PersistenceState{
-		APIKey:          apiKey,
-		User:            user,
-		RequestService:  processor.RequestService,
-		UsageLogService: processor.UsageLogService,
-		ChannelService:  processor.ChannelService,
-		ChannelSelector: processor.channelSelector,
-		LoadBalancer:    processor.loadBalancer,
-		ModelMapper:     processor.ModelMapper,
-		Proxy:           processor.proxy,
-		ChannelIndex:    0,
+		APIKey:            apiKey,
+		User:              user,
+		RequestService:    processor.RequestService,
+		UsageLogService:   processor.UsageLogService,
+		ChannelService:    processor.ChannelService,
+		ChannelSelector:   processor.channelSelector,
+		LoadBalancer:      processor.loadBalancer,
+		ModelMapper:       processor.ModelMapper,
+		Proxy:             processor.proxy,
+		ChannelIndex:      0,
+		AllowedChannelIDs: allowedChannelIDs, // 新增字段
 	}
 
 	var pipelineOpts []pipeline.Option
@@ -224,4 +245,23 @@ func (processor *ChatCompletionProcessor) Process(ctx context.Context, request *
 		ChatCompletion:       result.Response,
 		ChatCompletionStream: nil,
 	}, nil
+}
+
+// getActiveProfile 从APIKeyProfiles中获取活动的profile
+func getActiveProfile(profiles *objects.APIKeyProfiles) *objects.APIKeyProfile {
+	if profiles == nil || len(profiles.Profiles) == 0 {
+		return nil
+	}
+
+	// 如果指定了活动profile，查找它
+	if profiles.ActiveProfile != "" {
+		for i := range profiles.Profiles {
+			if profiles.Profiles[i].Name == profiles.ActiveProfile {
+				return &profiles.Profiles[i]
+			}
+		}
+	}
+
+	// 否则返回第一个profile作为默认
+	return &profiles.Profiles[0]
 }

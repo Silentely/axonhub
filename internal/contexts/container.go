@@ -9,15 +9,16 @@ import (
 
 // contextContainer contains all values in the context.
 type contextContainer struct {
-	ProjectID     *int
-	TraceID       *string
-	RequestID     *string
-	OperationName *string
-	APIKey        *ent.APIKey
-	User          *ent.User
-	Source        *request.Source
-	Thread        *ent.Thread
-	Trace         *ent.Trace
+	ProjectID          *int
+	TraceID            *string
+	RequestID          *string
+	OperationName      *string
+	SpecifiedChannelID *int // API密钥中指定的渠道ID（如：ah-xxx#10）
+	APIKey             *ent.APIKey
+	User               *ent.User
+	Source             *request.Source
+	Thread             *ent.Thread
+	Trace              *ent.Trace
 }
 
 // getContainer retrieves the existing container from context, or creates a new one and stores it in the context if it doesn't exist.

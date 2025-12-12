@@ -316,7 +316,17 @@
       "view": {
         "title": "View API Key",
         "description": "View the complete API key details.",
-        "warning": "⚠️ Keep your API key secure and do not share it with unauthorized parties. Anyone with access to this key can make requests on your behalf."
+        "warning": "⚠️ Keep your API key secure and do not share it with unauthorized parties. Anyone with access to this key can make requests on your behalf.",
+        "channelUsage": {
+          "title": "Specify Channel by ID",
+          "description": "You can specify a particular channel to use by appending #channelID to your API key. This will restrict requests to use only that specific channel.",
+          "howToFindId": "How to Find Channel ID?",
+          "step1": "Go to the Channels management page",
+          "step2": "Click the expand button on the left side of the channel you want to use",
+          "step3": "View the Channel ID in the expanded Basic Info section (displayed as: #123)",
+          "exampleTitle": "Usage Example",
+          "example": "{{key}}#10"
+        }
       },
       "bulkDisable": {
         "title": "Bulk Disable API Keys",
@@ -1045,6 +1055,7 @@
     },
     "expandedRow": {
       "basicInfo": "Basic Information",
+      "channelId": "Channel ID",
       "performance": "Performance",
       "modelsAndRemark": "Models & Remark",
       "modelInfo": "Model Information",

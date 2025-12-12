@@ -244,8 +244,10 @@ func selectChannels(inbound *PersistentInboundTransformer) pipeline.Middleware {
 
 		selector := inbound.state.ChannelSelector
 
-		if profile := GetActiveProfile(inbound.state.APIKey); profile != nil && len(profile.ChannelIDs) > 0 {
-			selector = NewSelectedChannelsSelector(selector, profile.ChannelIDs)
+		// 如果有指定的允许渠道ID列表（来自URL#后缀或Profile配置），使用SelectedChannelsSelector包装
+		if len(inbound.state.AllowedChannelIDs) > 0 {
+			selector = NewSelectedChannelsSelector(selector, inbound.state.AllowedChannelIDs)
+			log.Debug(ctx, "Filtering channels by allowed IDs", log.Any("channel_ids", inbound.state.AllowedChannelIDs))
 		}
 
 		if inbound.state.LoadBalancer != nil {
@@ -254,6 +256,10 @@ func selectChannels(inbound *PersistentInboundTransformer) pipeline.Middleware {
 
 		channels, err := selector.Select(ctx, llmRequest)
 		if err != nil {
+			log.Warn(ctx, "Failed to select channels",
+				log.String("model", llmRequest.Model),
+				log.Any("allowed_channel_ids", inbound.state.AllowedChannelIDs),
+				log.Cause(err))
 			return nil, err
 		}
 

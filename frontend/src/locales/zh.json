@@ -851,8 +851,8 @@
           "searchPlaceholder": "搜索模型...",
           "showAddedOnly": "仅显示已添加",
           "added": "已添加",
-          "clearAllTitle": "清空全部支持的模型？",
-          "clearAllDescription": "确定要清空全部 {{count}} 个模型吗？",
+          "clearAllTitle": "清空全部模型",
+          "clearAllDescription": "将清空全部 {{count}} 个模型。清空后需要重新添加模型才能使用该渠道。",
           "willRemove": "将移除",
           "allModels": "全部模型 ({{count}})"
         },

@@ -824,8 +824,8 @@
           "showAddedOnly": "Show added only",
           "added": "Added",
           "allModels": "All Models ({{count}})",
-          "clearAllTitle": "Clear all supported models?",
-          "clearAllDescription": "Are you sure you want to clear all {{count}} models?",
+          "clearAllTitle": "Clear All Models",
+          "clearAllDescription": "This will clear all {{count}} models. You'll need to add models again before using this channel.",
           "willRemove": "Will remove"
         },
         "defaultTestModel": {

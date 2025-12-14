@@ -37,7 +37,7 @@ export function ApiKeyProfilesDialog({ open, onOpenChange, onSubmit, loading = f
   const { selectedApiKey } = useApiKeysContext()
   const { data: availableModels, mutateAsync: fetchModels } = useQueryModels()
   // 用于解决 Dialog 内 Popover 无法滚动的问题
-  const dialogContentRef = useRef<DialogContentRef>(null)
+  const [dialogContent, setDialogContent] = useState<HTMLDivElement | null>(null)
 
   useEffect(() => {
     if (open) {
@@ -166,7 +166,7 @@ export function ApiKeyProfilesDialog({ open, onOpenChange, onSubmit, loading = f
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent ref={dialogContentRef} className='flex max-h-[90vh] flex-col sm:max-w-4xl'>
+      <DialogContent ref={setDialogContent} className='flex max-h-[90vh] flex-col sm:max-w-4xl'>
         <DialogHeader className='shrink-0 text-left'>
           <DialogTitle className='flex items-center gap-2'>
             <IconSettings className='h-5 w-5' />
@@ -212,7 +212,7 @@ export function ApiKeyProfilesDialog({ open, onOpenChange, onSubmit, loading = f
                             availableModels={availableModels?.map((model) => model.id) || []}
                             t={t}
                             defaultExpanded={profileIndex === 0}
-                            portalContainer={dialogContentRef.current}
+                            portalContainer={dialogContent}
                           />
                         </div>
                       ))}

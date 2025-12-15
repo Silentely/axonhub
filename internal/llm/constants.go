@@ -19,4 +19,7 @@ func (f APIFormat) String() string {
 const (
 	ToolType                = "function"
 	ToolTypeImageGeneration = "image_generation"
+	ToolTypeGoogleSearch    = "google_search"
+	ToolTypeCodeExecution   = "code_execution"
+	ToolTypeUrlContext      = "url_context"
 )

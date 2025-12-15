@@ -214,6 +214,9 @@ func convertLLMToGeminiRequestWithConfig(chatReq *llm.Request, config *Config) *
 
 			case "code_execution":
 				tools = append(tools, &Tool{CodeExecution: &CodeExecution{}})
+
+			case "url_context":
+				tools = append(tools, &Tool{UrlContext: &UrlContext{}})
 			}
 		}
 

@@ -368,20 +368,26 @@ func TestRingBuffer_Concurrent(t *testing.T) {
 		var wg sync.WaitGroup
 
 		// Push items
+		wg.Add(1)
 
-		wg.Go(func() {
+		go func() {
+			defer wg.Done()
+
 			for i := range 50 {
 				rb.Push(int64(i), i*10)
 			}
-		})
+		}()
 
 		// Read items
+		wg.Add(1)
 
-		wg.Go(func() {
+		go func() {
+			defer wg.Done()
+
 			for i := range 50 {
 				rb.Get(int64(i))
 			}
-		})
+		}()
 
 		wg.Wait()
 	})
@@ -397,22 +403,28 @@ func TestRingBuffer_Concurrent(t *testing.T) {
 		var wg sync.WaitGroup
 
 		// Cleanup old items
+		wg.Add(1)
 
-		wg.Go(func() {
+		go func() {
+			defer wg.Done()
+
 			for i := range 10 {
 				rb.CleanupBefore(int64(i * 10))
 			}
-		})
+		}()
 
 		// Range over items
+		wg.Add(1)
 
-		wg.Go(func() {
+		go func() {
+			defer wg.Done()
+
 			for range 10 {
 				rb.Range(func(timestamp int64, value int) bool {
 					return true
 				})
 			}
-		})
+		}()
 
 		wg.Wait()
 	})

@@ -19,7 +19,9 @@ func (f APIFormat) String() string {
 const (
 	ToolType                = "function"
 	ToolTypeImageGeneration = "image_generation"
-	// ToolTypeGoogle indicates a Google/Gemini-specific tool.
-	// When this type is set, Tool.Google field contains the specific tool configuration.
-	ToolTypeGoogle = "google"
+	// Google/Gemini-specific tool types.
+	// Configuration for these tools is stored in Tool.Google namespace.
+	ToolTypeGoogleSearch        = "google_search"
+	ToolTypeGoogleCodeExecution = "google_code_execution"
+	ToolTypeGoogleUrlContext    = "google_url_context"
 )

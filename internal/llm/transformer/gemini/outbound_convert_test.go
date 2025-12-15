@@ -413,7 +413,7 @@ func TestConvertLLMToGeminiRequest_Tools(t *testing.T) {
 				},
 				Tools: []llm.Tool{
 					{
-						Type: llm.ToolTypeGoogle,
+						Type: llm.ToolTypeGoogleSearch,
 						Google: &llm.GoogleTools{
 							Search: &llm.GoogleSearch{},
 						},
@@ -441,7 +441,7 @@ func TestConvertLLMToGeminiRequest_Tools(t *testing.T) {
 				},
 				Tools: []llm.Tool{
 					{
-						Type: llm.ToolTypeGoogle,
+						Type: llm.ToolTypeGoogleCodeExecution,
 						Google: &llm.GoogleTools{
 							CodeExecution: &llm.GoogleCodeExecution{},
 						},
@@ -469,7 +469,7 @@ func TestConvertLLMToGeminiRequest_Tools(t *testing.T) {
 				},
 				Tools: []llm.Tool{
 					{
-						Type: llm.ToolTypeGoogle,
+						Type: llm.ToolTypeGoogleUrlContext,
 						Google: &llm.GoogleTools{
 							UrlContext: &llm.GoogleUrlContext{},
 						},
@@ -506,13 +506,13 @@ func TestConvertLLMToGeminiRequest_Tools(t *testing.T) {
 						},
 					},
 					{
-						Type: llm.ToolTypeGoogle,
+						Type: llm.ToolTypeGoogleSearch,
 						Google: &llm.GoogleTools{
 							Search: &llm.GoogleSearch{},
 						},
 					},
 					{
-						Type: llm.ToolTypeGoogle,
+						Type: llm.ToolTypeGoogleCodeExecution,
 						Google: &llm.GoogleTools{
 							CodeExecution: &llm.GoogleCodeExecution{},
 						},

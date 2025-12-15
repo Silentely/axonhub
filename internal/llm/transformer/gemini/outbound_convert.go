@@ -209,18 +209,19 @@ func convertLLMToGeminiRequestWithConfig(chatReq *llm.Request, config *Config) *
 					tools = append(tools, functionTool)
 				}
 
-			case llm.ToolTypeGoogle:
-				// Handle Google-specific tools from the Google namespace
-				if tool.Google != nil {
-					if tool.Google.Search != nil {
-						tools = append(tools, &Tool{GoogleSearch: &GoogleSearch{}})
-					}
-					if tool.Google.CodeExecution != nil {
-						tools = append(tools, &Tool{CodeExecution: &CodeExecution{}})
-					}
-					if tool.Google.UrlContext != nil {
-						tools = append(tools, &Tool{UrlContext: &UrlContext{}})
-					}
+			case llm.ToolTypeGoogleSearch:
+				if tool.Google != nil && tool.Google.Search != nil {
+					tools = append(tools, &Tool{GoogleSearch: &GoogleSearch{}})
+				}
+
+			case llm.ToolTypeGoogleCodeExecution:
+				if tool.Google != nil && tool.Google.CodeExecution != nil {
+					tools = append(tools, &Tool{CodeExecution: &CodeExecution{}})
+				}
+
+			case llm.ToolTypeGoogleUrlContext:
+				if tool.Google != nil && tool.Google.UrlContext != nil {
+					tools = append(tools, &Tool{UrlContext: &UrlContext{}})
 				}
 			}
 		}

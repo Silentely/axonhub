@@ -2,7 +2,6 @@ package aisdk
 
 import (
 	"encoding/json"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -36,15 +35,15 @@ func TestDataStreamTransformer_StreamTransformation_WithTestData(t *testing.T) {
 				expectedContent := "Sure! Here’s the output from 1 to 20, with 5 numbers on each line:\n\n```\n1 2 3 4 5\n6 7 8 9 10\n11 12 13 14 15\n16 17 18 19 20\n```"
 
 				// Find text parts and aggregate content
-				var aggregatedText strings.Builder
+				var aggregatedText string
 
 				for _, part := range result.Parts {
 					if part.Type == "text" {
-						aggregatedText.WriteString(part.Text)
+						aggregatedText += part.Text
 					}
 				}
 
-				require.Equal(t, expectedContent, aggregatedText.String())
+				require.Equal(t, expectedContent, aggregatedText)
 			},
 		},
 		{

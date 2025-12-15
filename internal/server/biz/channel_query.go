@@ -74,7 +74,6 @@ func (svc *ChannelService) queryChannelsWithModelFilter(
 
 	// Filter channels by model support
 	var filteredChannels []*ent.Channel
-
 	for _, channel := range channels {
 		channelObj := Channel{Channel: channel}
 		if channelObj.IsModelSupported(*input.Model) {

@@ -1,7 +1,5 @@
 package scopes
 
-import "slices"
-
 // ScopeSlug represents a permission scope to view or manage the data of the system.
 // Every user can view and manage their own data, and manage data of other users if they have the appropriate scopes.
 type ScopeSlug string
@@ -169,8 +167,11 @@ func AllScopes(level *ScopeLevel) []Scope {
 	filtered := make([]Scope, 0)
 
 	for _, scope := range scopeConfigs {
-		if slices.Contains(scope.Levels, *level) {
-			filtered = append(filtered, scope)
+		for _, l := range scope.Levels {
+			if l == *level {
+				filtered = append(filtered, scope)
+				break
+			}
 		}
 	}
 

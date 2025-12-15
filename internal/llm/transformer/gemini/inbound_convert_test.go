@@ -345,10 +345,12 @@ func TestConvertGeminiToLLMRequest_Tools(t *testing.T) {
 			validate: func(t *testing.T, result *llm.Request) {
 				t.Helper()
 				require.Len(t, result.Tools, 2)
-				require.Equal(t, "google_search", result.Tools[0].Type)
-				require.NotNil(t, result.Tools[0].GoogleSearch)
-				require.Equal(t, "code_execution", result.Tools[1].Type)
-				require.NotNil(t, result.Tools[1].CodeExecution)
+				require.Equal(t, llm.ToolTypeGoogle, result.Tools[0].Type)
+				require.NotNil(t, result.Tools[0].Google)
+				require.NotNil(t, result.Tools[0].Google.Search)
+				require.Equal(t, llm.ToolTypeGoogle, result.Tools[1].Type)
+				require.NotNil(t, result.Tools[1].Google)
+				require.NotNil(t, result.Tools[1].Google.CodeExecution)
 			},
 		},
 		{
@@ -369,8 +371,9 @@ func TestConvertGeminiToLLMRequest_Tools(t *testing.T) {
 			validate: func(t *testing.T, result *llm.Request) {
 				t.Helper()
 				require.Len(t, result.Tools, 1)
-				require.Equal(t, "url_context", result.Tools[0].Type)
-				require.NotNil(t, result.Tools[0].UrlContext)
+				require.Equal(t, llm.ToolTypeGoogle, result.Tools[0].Type)
+				require.NotNil(t, result.Tools[0].Google)
+				require.NotNil(t, result.Tools[0].Google.UrlContext)
 			},
 		},
 		{
@@ -393,9 +396,9 @@ func TestConvertGeminiToLLMRequest_Tools(t *testing.T) {
 			validate: func(t *testing.T, result *llm.Request) {
 				t.Helper()
 				require.Len(t, result.Tools, 3)
-				require.Equal(t, "google_search", result.Tools[0].Type)
-				require.Equal(t, "code_execution", result.Tools[1].Type)
-				require.Equal(t, "url_context", result.Tools[2].Type)
+				require.Equal(t, llm.ToolTypeGoogle, result.Tools[0].Type)
+				require.Equal(t, llm.ToolTypeGoogle, result.Tools[1].Type)
+				require.Equal(t, llm.ToolTypeGoogle, result.Tools[2].Type)
 			},
 		},
 		{

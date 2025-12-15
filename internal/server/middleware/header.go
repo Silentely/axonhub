@@ -86,8 +86,8 @@ func ExtractAPIKeyFromRequest(r *http.Request, config *APIKeyConfig) (string, er
 		)
 
 		for _, prefix := range config.AllowedPrefixes {
-			if after, ok := strings.CutPrefix(headerValue, prefix); ok {
-				apiKey = after
+			if strings.HasPrefix(headerValue, prefix) {
+				apiKey = strings.TrimPrefix(headerValue, prefix)
 				foundPrefix = true
 
 				break

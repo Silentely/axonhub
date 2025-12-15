@@ -133,8 +133,10 @@ func convertGeminiToLLMRequest(geminiReq *GenerateContentRequest) (*llm.Request,
 			// Handle Google Search tool
 			if tool.GoogleSearch != nil {
 				llmTool := llm.Tool{
-					Type:         "google_search",
-					GoogleSearch: &llm.GoogleSearch{},
+					Type: llm.ToolTypeGoogle,
+					Google: &llm.GoogleTools{
+						Search: &llm.GoogleSearch{},
+					},
 				}
 				tools = append(tools, llmTool)
 			}
@@ -142,8 +144,10 @@ func convertGeminiToLLMRequest(geminiReq *GenerateContentRequest) (*llm.Request,
 			// Handle Code Execution tool
 			if tool.CodeExecution != nil {
 				llmTool := llm.Tool{
-					Type:          "code_execution",
-					CodeExecution: &llm.CodeExecution{},
+					Type: llm.ToolTypeGoogle,
+					Google: &llm.GoogleTools{
+						CodeExecution: &llm.GoogleCodeExecution{},
+					},
 				}
 				tools = append(tools, llmTool)
 			}
@@ -151,8 +155,10 @@ func convertGeminiToLLMRequest(geminiReq *GenerateContentRequest) (*llm.Request,
 			// Handle URL Context tool
 			if tool.UrlContext != nil {
 				llmTool := llm.Tool{
-					Type:       "url_context",
-					UrlContext: &llm.UrlContext{},
+					Type: llm.ToolTypeGoogle,
+					Google: &llm.GoogleTools{
+						UrlContext: &llm.GoogleUrlContext{},
+					},
 				}
 				tools = append(tools, llmTool)
 			}

@@ -96,7 +96,7 @@ type StrategyDebug struct {
 	// Duration is the time spent scoring
 	Duration time.Duration
 	// Details contains strategy-specific information
-	Details map[string]any
+	Details map[string]interface{}
 }
 
 type debugInfoKey struct{}

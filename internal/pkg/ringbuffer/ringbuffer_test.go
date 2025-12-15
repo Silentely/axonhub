@@ -152,7 +152,7 @@ func TestRingBuffer_Get(t *testing.T) {
 func TestRingBuffer_CleanupBefore(t *testing.T) {
 	t.Run("cleanup oldest items", func(t *testing.T) {
 		rb := New[string](10)
-		for i := range int64(10) {
+		for i := int64(0); i < 10; i++ {
 			rb.Push(i*100, "value")
 		}
 
@@ -230,7 +230,6 @@ func TestRingBuffer_Range(t *testing.T) {
 		rb.Push(300, 30)
 
 		var count int
-
 		rb.Range(func(timestamp int64, value int) bool {
 			count++
 			return count < 2 // Stop after 2 items
@@ -258,7 +257,6 @@ func TestRingBuffer_Range(t *testing.T) {
 		rb.Push(400, 40) // This causes wraparound
 
 		var timestamps []int64
-
 		rb.Range(func(timestamp int64, value int) bool {
 			timestamps = append(timestamps, timestamp)
 			return true
@@ -344,13 +342,13 @@ func TestRingBuffer_Concurrent(t *testing.T) {
 		var wg sync.WaitGroup
 
 		// Spawn 10 goroutines, each pushing 10 items
-		for i := range 10 {
+		for i := 0; i < 10; i++ {
 			wg.Add(1)
 
 			go func(base int) {
 				defer wg.Done()
 
-				for j := range 10 {
+				for j := 0; j < 10; j++ {
 					timestamp := int64(base*10 + j)
 					rb.Push(timestamp, base*10+j)
 				}
@@ -373,7 +371,7 @@ func TestRingBuffer_Concurrent(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			for i := range 50 {
+			for i := 0; i < 50; i++ {
 				rb.Push(int64(i), i*10)
 			}
 		}()
@@ -384,7 +382,7 @@ func TestRingBuffer_Concurrent(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			for i := range 50 {
+			for i := 0; i < 50; i++ {
 				rb.Get(int64(i))
 			}
 		}()
@@ -396,7 +394,7 @@ func TestRingBuffer_Concurrent(t *testing.T) {
 		rb := New[int](100)
 
 		// Populate buffer
-		for i := range 100 {
+		for i := 0; i < 100; i++ {
 			rb.Push(int64(i), i)
 		}
 
@@ -408,7 +406,7 @@ func TestRingBuffer_Concurrent(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			for i := range 10 {
+			for i := 0; i < 10; i++ {
 				rb.CleanupBefore(int64(i * 10))
 			}
 		}()
@@ -419,7 +417,7 @@ func TestRingBuffer_Concurrent(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			for range 10 {
+			for i := 0; i < 10; i++ {
 				rb.Range(func(timestamp int64, value int) bool {
 					return true
 				})
@@ -436,7 +434,7 @@ func TestRingBuffer_ComplexScenario(t *testing.T) {
 		rb := New[int](10)
 
 		// Add data for timestamps 0-9
-		for i := range int64(10) {
+		for i := int64(0); i < 10; i++ {
 			rb.Push(i, int(i*100))
 		}
 
@@ -475,13 +473,12 @@ func TestRingBuffer_ComplexScenario(t *testing.T) {
 		rb := New[*Metric](60) // 60-second window
 
 		// Simulate recording metrics
-		for i := range int64(60) {
+		for i := int64(0); i < 60; i++ {
 			rb.Push(i, &Metric{Count: 1, Sum: i})
 		}
 
 		// Calculate aggregated metrics
 		var totalCount, totalSum int64
-
 		rb.Range(func(timestamp int64, value *Metric) bool {
 			totalCount += value.Count
 			totalSum += value.Sum
@@ -497,28 +494,32 @@ func TestRingBuffer_ComplexScenario(t *testing.T) {
 func BenchmarkRingBuffer_Push(b *testing.B) {
 	rb := New[int](1000)
 
-	for i := 0; b.Loop(); i++ {
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
 		rb.Push(int64(i), i)
 	}
 }
 
 func BenchmarkRingBuffer_Get(b *testing.B) {
 	rb := New[int](1000)
-	for i := range 1000 {
+	for i := 0; i < 1000; i++ {
 		rb.Push(int64(i), i)
 	}
 
-	for i := 0; b.Loop(); i++ {
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
 		rb.Get(int64(i % 1000))
 	}
 }
 
 func BenchmarkRingBuffer_CleanupBefore(b *testing.B) {
-	for b.Loop() {
+	for i := 0; i < b.N; i++ {
 		b.StopTimer()
 
 		rb := New[int](1000)
-		for j := range 1000 {
+		for j := 0; j < 1000; j++ {
 			rb.Push(int64(j), j)
 		}
 
@@ -530,11 +531,13 @@ func BenchmarkRingBuffer_CleanupBefore(b *testing.B) {
 
 func BenchmarkRingBuffer_Range(b *testing.B) {
 	rb := New[int](1000)
-	for i := range 1000 {
+	for i := 0; i < 1000; i++ {
 		rb.Push(int64(i), i)
 	}
 
-	for b.Loop() {
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
 		rb.Range(func(timestamp int64, value int) bool {
 			return true
 		})

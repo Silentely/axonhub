@@ -413,8 +413,10 @@ func TestConvertLLMToGeminiRequest_Tools(t *testing.T) {
 				},
 				Tools: []llm.Tool{
 					{
-						Type:         "google_search",
-						GoogleSearch: &llm.GoogleSearch{},
+						Type: llm.ToolTypeGoogle,
+						Google: &llm.GoogleTools{
+							Search: &llm.GoogleSearch{},
+						},
 					},
 				},
 			},
@@ -439,8 +441,10 @@ func TestConvertLLMToGeminiRequest_Tools(t *testing.T) {
 				},
 				Tools: []llm.Tool{
 					{
-						Type:          "code_execution",
-						CodeExecution: &llm.CodeExecution{},
+						Type: llm.ToolTypeGoogle,
+						Google: &llm.GoogleTools{
+							CodeExecution: &llm.GoogleCodeExecution{},
+						},
 					},
 				},
 			},
@@ -465,8 +469,10 @@ func TestConvertLLMToGeminiRequest_Tools(t *testing.T) {
 				},
 				Tools: []llm.Tool{
 					{
-						Type:       "url_context",
-						UrlContext: &llm.UrlContext{},
+						Type: llm.ToolTypeGoogle,
+						Google: &llm.GoogleTools{
+							UrlContext: &llm.GoogleUrlContext{},
+						},
 					},
 				},
 			},
@@ -500,12 +506,16 @@ func TestConvertLLMToGeminiRequest_Tools(t *testing.T) {
 						},
 					},
 					{
-						Type:         "google_search",
-						GoogleSearch: &llm.GoogleSearch{},
+						Type: llm.ToolTypeGoogle,
+						Google: &llm.GoogleTools{
+							Search: &llm.GoogleSearch{},
+						},
 					},
 					{
-						Type:          "code_execution",
-						CodeExecution: &llm.CodeExecution{},
+						Type: llm.ToolTypeGoogle,
+						Google: &llm.GoogleTools{
+							CodeExecution: &llm.GoogleCodeExecution{},
+						},
 					},
 				},
 			},

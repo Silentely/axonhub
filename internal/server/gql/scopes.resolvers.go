@@ -14,7 +14,6 @@ import (
 // AllScopes returns all available scopes with descriptions.
 func (r *queryResolver) AllScopes(ctx context.Context, level *string) ([]*ScopeInfo, error) {
 	var scopeLevel *scopes.ScopeLevel
-
 	if level != nil {
 		sl := scopes.ScopeLevel(*level)
 		scopeLevel = &sl

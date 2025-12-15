@@ -607,7 +607,7 @@ func TestChannelMetrics_ConsecutiveFailures(t *testing.T) {
 	}
 
 	// Record 3 consecutive failures
-	for range 3 {
+	for i := 0; i < 3; i++ {
 		perf := &PerformanceRecord{
 			ChannelID:       1,
 			StartTime:       now.Add(-100 * time.Millisecond),
@@ -667,7 +667,7 @@ func TestChannelMetrics_GetOrCreateTimeSlot(t *testing.T) {
 		windowSize := int64(10)
 
 		// Fill the window
-		for i := range windowSize {
+		for i := int64(0); i < windowSize; i++ {
 			ts := now.Add(-time.Duration(i) * time.Second).Unix()
 			cm.getOrCreateTimeSlot(ts, now.Add(-time.Duration(i)*time.Second), windowSize)
 		}

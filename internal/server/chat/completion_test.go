@@ -895,7 +895,7 @@ func TestChatCompletionProcessor_Process_MultipleRequests(t *testing.T) {
 	ctx = contexts.WithProjectID(ctx, project.ID)
 
 	// Execute multiple requests
-	for i := range 3 {
+	for i := 0; i < 3; i++ {
 		requestCount++
 		respID := lo.RandomString(10, lo.LettersCharset)
 		mockResp := buildMockOpenAIResponse(

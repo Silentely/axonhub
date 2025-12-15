@@ -126,9 +126,11 @@ func (t *InboundTransformer) TransformError(ctx context.Context, rawErr error) *
 		return &httpclient.Error{
 			StatusCode: http.StatusUnprocessableEntity,
 			Status:     http.StatusText(http.StatusUnprocessableEntity),
-			Body: fmt.Appendf(nil,
-				`{"message":"%s","type":"invalid_model_error"}`,
-				strings.TrimPrefix(rawErr.Error(), transformer.ErrInvalidModel.Error()+": "),
+			Body: []byte(
+				fmt.Sprintf(
+					`{"message":"%s","type":"invalid_model_error"}`,
+					strings.TrimPrefix(rawErr.Error(), transformer.ErrInvalidModel.Error()+": "),
+				),
 			),
 		}
 	}

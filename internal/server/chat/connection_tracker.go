@@ -1,7 +1,6 @@
 package chat
 
 import (
-	"maps"
 	"sync"
 )
 
@@ -65,7 +64,9 @@ func (t *DefaultConnectionTracker) GetAllConnections() map[int]int {
 	defer t.mu.RUnlock()
 
 	snapshot := make(map[int]int, len(t.channelConnections))
-	maps.Copy(snapshot, t.channelConnections)
+	for k, v := range t.channelConnections {
+		snapshot[k] = v
+	}
 
 	return snapshot
 }

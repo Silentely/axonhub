@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"maps"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -76,7 +75,9 @@ func newMockReadCloser(data []byte) *mockReadCloser {
 func TestRegisterDecoder(t *testing.T) {
 	// Save original state
 	originalDecoders := make(map[string]StreamDecoderFactory)
-	maps.Copy(originalDecoders, globalRegistry.decoders)
+	for k, v := range globalRegistry.decoders {
+		originalDecoders[k] = v
+	}
 
 	// Clean up after test
 	defer func() {

@@ -42,7 +42,7 @@ type StrategyScore struct {
 	// Score is the score calculated by this strategy
 	Score float64
 	// Details contains strategy-specific information
-	Details map[string]any
+	Details map[string]interface{}
 	// Duration is the time spent on scoring
 	Duration time.Duration
 }
@@ -254,9 +254,9 @@ func (lb *LoadBalancer) logDecision(ctx context.Context, channels []*biz.Channel
 	// Log individual channel details
 	for _, info := range decisions {
 		// Create a simplified log entry with strategy breakdown
-		strategySummary := make(map[string]any)
+		strategySummary := make(map[string]interface{})
 		for _, s := range info.StrategyScores {
-			strategySummary[s.StrategyName] = map[string]any{
+			strategySummary[s.StrategyName] = map[string]interface{}{
 				"score":    s.Score,
 				"duration": s.Duration,
 			}

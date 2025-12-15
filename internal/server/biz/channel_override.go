@@ -3,7 +3,6 @@ package biz
 import (
 	"encoding/json"
 	"fmt"
-	"maps"
 	"strings"
 
 	"github.com/looplj/axonhub/internal/objects"
@@ -140,7 +139,9 @@ func parseJSONObject(input string) (map[string]any, error) {
 func deepMergeMap(base, override map[string]any) map[string]any {
 	result := make(map[string]any, len(base)+len(override))
 
-	maps.Copy(result, base)
+	for k, v := range base {
+		result[k] = v
+	}
 
 	for k, overrideVal := range override {
 		if baseVal, exists := result[k]; exists {

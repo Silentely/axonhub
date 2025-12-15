@@ -182,9 +182,11 @@ func (t *InboundTransformer) TransformError(ctx context.Context, rawErr error) *
 		return &httpclient.Error{
 			StatusCode: http.StatusUnprocessableEntity,
 			Status:     http.StatusText(http.StatusUnprocessableEntity),
-			Body: fmt.Appendf(nil,
-				`{"error":{"message":"%s","type":"invalid_model_error"}}`,
-				strings.TrimPrefix(rawErr.Error(), transformer.ErrInvalidModel.Error()+": "),
+			Body: []byte(
+				fmt.Sprintf(
+					`{"error":{"message":"%s","type":"invalid_model_error"}}`,
+					strings.TrimPrefix(rawErr.Error(), transformer.ErrInvalidModel.Error()+": "),
+				),
 			),
 		}
 	}
@@ -198,9 +200,11 @@ func (t *InboundTransformer) TransformError(ctx context.Context, rawErr error) *
 		return &httpclient.Error{
 			StatusCode: http.StatusBadRequest,
 			Status:     http.StatusText(http.StatusBadRequest),
-			Body: fmt.Appendf(nil,
-				`{"error":{"message":"%s","type":"invalid_request_error"}}`,
-				strings.TrimPrefix(rawErr.Error(), transformer.ErrInvalidRequest.Error()+": "),
+			Body: []byte(
+				fmt.Sprintf(
+					`{"error":{"message":"%s","type":"invalid_request_error"}}`,
+					strings.TrimPrefix(rawErr.Error(), transformer.ErrInvalidRequest.Error()+": "),
+				),
 			),
 		}
 	}
@@ -225,6 +229,6 @@ func (t *InboundTransformer) TransformError(ctx context.Context, rawErr error) *
 	return &httpclient.Error{
 		StatusCode: http.StatusInternalServerError,
 		Status:     http.StatusText(http.StatusInternalServerError),
-		Body:       fmt.Appendf(nil, `{"error":{"message":"%s","type":"internal_server_error"}}`, rawErr.Error()),
+		Body:       []byte(fmt.Sprintf(`{"error":{"message":"%s","type":"internal_server_error"}}`, rawErr.Error())),
 	}
 }

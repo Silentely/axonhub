@@ -192,7 +192,9 @@ func (t *DataStreamTransformer) TransformError(ctx context.Context, rawErr error
 		return &httpclient.Error{
 			StatusCode: http.StatusBadRequest,
 			Status:     http.StatusText(http.StatusBadRequest),
-			Body:       fmt.Appendf(nil, `{"message":"%s","type":"invalid_request"}`, strings.TrimPrefix(rawErr.Error(), transformer.ErrInvalidRequest.Error()+": ")),
+			Body: []byte(
+				fmt.Sprintf(`{"message":"%s","type":"invalid_request"}`, strings.TrimPrefix(rawErr.Error(), transformer.ErrInvalidRequest.Error()+": ")),
+			),
 		}
 	}
 
@@ -200,14 +202,14 @@ func (t *DataStreamTransformer) TransformError(ctx context.Context, rawErr error
 		return &httpclient.Error{
 			StatusCode: llmErr.StatusCode,
 			Status:     http.StatusText(llmErr.StatusCode),
-			Body:       fmt.Appendf(nil, `{"message":"%s","type":"%s"}`, llmErr.Detail.Message, llmErr.Detail.Type),
+			Body:       []byte(fmt.Sprintf(`{"message":"%s","type":"%s"}`, llmErr.Detail.Message, llmErr.Detail.Type)),
 		}
 	}
 
 	return &httpclient.Error{
 		StatusCode: http.StatusInternalServerError,
 		Status:     http.StatusText(http.StatusInternalServerError),
-		Body:       fmt.Appendf(nil, `{"message":"%s","type":"internal_server_error"}`, rawErr.Error()),
+		Body:       []byte(fmt.Sprintf(`{"message":"%s","type":"internal_server_error"}`, rawErr.Error())),
 	}
 }
 

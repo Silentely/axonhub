@@ -67,7 +67,7 @@ func createEventStreamMessage(messageType, eventType string, payload []byte) []b
 }
 
 // createChunkPayload creates a test chunk payload.
-func createChunkPayload(data map[string]any) []byte {
+func createChunkPayload(data map[string]interface{}) []byte {
 	// Create the inner data
 	innerData, _ := json.Marshal(data)
 
@@ -96,9 +96,9 @@ func TestNewAWSEventStreamDecoder(t *testing.T) {
 
 func TestAWSEventStreamDecoder_EventMessage(t *testing.T) {
 	// Create test data
-	testData := map[string]any{
+	testData := map[string]interface{}{
 		"type": "message_start",
-		"message": map[string]any{
+		"message": map[string]interface{}{
 			"id":      "test-id",
 			"content": "Hello, World!",
 		},
@@ -134,7 +134,7 @@ func TestAWSEventStreamDecoder_EventMessage(t *testing.T) {
 
 func TestAWSEventStreamDecoder_ExceptionMessage(t *testing.T) {
 	// Create exception payload
-	exceptionPayload := map[string]any{
+	exceptionPayload := map[string]interface{}{
 		"__type":  "ValidationException",
 		"message": "Invalid input parameter",
 	}
@@ -285,13 +285,13 @@ func TestAWSEventStreamDecoder_InvalidBase64(t *testing.T) {
 func TestAWSEventStreamDecoder_MultipleEvents(t *testing.T) {
 	ctx := context.Background()
 	// Create multiple test events
-	event1Data := map[string]any{
+	event1Data := map[string]interface{}{
 		"type":    "message_start",
-		"message": map[string]any{"id": "1"},
+		"message": map[string]interface{}{"id": "1"},
 	}
-	event2Data := map[string]any{
+	event2Data := map[string]interface{}{
 		"type":  "content_block_delta",
-		"delta": map[string]any{"text": "Hello"},
+		"delta": map[string]interface{}{"text": "Hello"},
 	}
 
 	// Create chunk payloads

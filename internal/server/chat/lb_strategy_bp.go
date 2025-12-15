@@ -106,14 +106,14 @@ func (s *ErrorAwareStrategy) ScoreWithDebug(ctx context.Context, channel *biz.Ch
 		return neutralScore, StrategyScore{
 			StrategyName: s.Name(),
 			Score:        neutralScore,
-			Details: map[string]any{
+			Details: map[string]interface{}{
 				"error": err.Error(),
 			},
 		}
 	}
 
 	score := s.maxScore
-	details := map[string]any{
+	details := map[string]interface{}{
 		"consecutive_failures": metrics.ConsecutiveFailures,
 		"request_count":        metrics.RequestCount,
 	}

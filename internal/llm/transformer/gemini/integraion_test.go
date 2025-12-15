@@ -318,7 +318,7 @@ func TestTransformRequest_Integration(t *testing.T) {
 					return false
 				}
 
-				var xVal, yVal any
+				var xVal, yVal interface{}
 				if err := json.Unmarshal(x, &xVal); err != nil {
 					return false
 				}

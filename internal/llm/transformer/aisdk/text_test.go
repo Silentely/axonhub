@@ -231,7 +231,7 @@ func TestInboundTransformer_TransformResponse(t *testing.T) {
 				require.Equal(t, "application/json", result.Headers.Get("Content-Type"))
 
 				// Parse response body
-				var responseData map[string]any
+				var responseData map[string]interface{}
 
 				err := json.Unmarshal(result.Body, &responseData)
 				require.NoError(t, err)

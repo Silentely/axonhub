@@ -19,9 +19,10 @@ func (f APIFormat) String() string {
 const (
 	ToolType                = "function"
 	ToolTypeImageGeneration = "image_generation"
-	// Google/Gemini-specific tool types.
-	// Configuration for these tools is stored in Tool.Google namespace.
-	ToolTypeGoogleSearch        = "google_search"
+	// ToolTypeGoogleSearch is the Google Search grounding tool type for Gemini.
+	ToolTypeGoogleSearch = "google_search"
+	// ToolTypeGoogleCodeExecution is the code execution tool type for Gemini.
 	ToolTypeGoogleCodeExecution = "google_code_execution"
-	ToolTypeGoogleUrlContext    = "google_url_context"
+	// ToolTypeGoogleUrlContext is the URL context grounding tool type for Gemini 2.0+.
+	ToolTypeGoogleUrlContext = "google_url_context"
 )

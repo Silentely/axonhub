@@ -327,6 +327,31 @@ func TestConvertGeminiToLLMRequest_Tools(t *testing.T) {
 			},
 		},
 		{
+			name: "request with google search and code execution tools",
+			input: &GenerateContentRequest{
+				Contents: []*Content{
+					{
+						Role: "user",
+						Parts: []*Part{
+							{Text: "Search and run"},
+						},
+					},
+				},
+				Tools: []*Tool{
+					{GoogleSearch: &GoogleSearch{}},
+					{CodeExecution: &CodeExecution{}},
+				},
+			},
+			validate: func(t *testing.T, result *llm.Request) {
+				t.Helper()
+				require.Len(t, result.Tools, 2)
+				require.Equal(t, "google_search", result.Tools[0].Type)
+				require.NotNil(t, result.Tools[0].GoogleSearch)
+				require.Equal(t, "code_execution", result.Tools[1].Type)
+				require.NotNil(t, result.Tools[1].CodeExecution)
+			},
+		},
+		{
 			name: "request with tool config AUTO",
 			input: &GenerateContentRequest{
 				Contents: []*Content{

@@ -8,10 +8,12 @@ import (
 // Tool represents a function tool.
 type Tool struct {
 	// Type is the type of the tool.
-	// Any of "function", "image_generation".
+	// Any of "function", "image_generation", "google_search", "code_execution".
 	Type            string           `json:"type"`
-	Function        Function         `json:"function"`
+	Function        Function         `json:"function,omitempty"`
 	ImageGeneration *ImageGeneration `json:"image_generation,omitempty"`
+	GoogleSearch    *GoogleSearch    `json:"google_search,omitempty"`
+	CodeExecution   *CodeExecution   `json:"code_execution,omitempty"`
 
 	// CacheControl is used for provider-specific cache control (e.g., Anthropic).
 	// This field is not serialized in JSON.
@@ -25,6 +27,9 @@ func (t Tool) MarshalJSON() ([]byte, error) {
 	m := toolJSONMarshaller(t)
 	// ImageGeneration is not a valid field for chat completion, so we should remove it from the request.
 	m.ImageGeneration = nil
+	// GoogleSearch and CodeExecution are provider-specific and handled by transformers.
+	m.GoogleSearch = nil
+	m.CodeExecution = nil
 
 	return json.Marshal(m)
 }
@@ -144,3 +149,11 @@ type ImageGeneration struct {
 	// It only works for the models support watermark, it will be ignored otherwise.
 	Watermark bool `json:"watermark,omitempty"`
 }
+
+// GoogleSearch represents Google Search grounding tool for Gemini.
+// This enables the model to perform real-time web searches.
+type GoogleSearch struct{}
+
+// CodeExecution represents code execution tool for Gemini.
+// This enables the model to execute code as part of generation.
+type CodeExecution struct{}

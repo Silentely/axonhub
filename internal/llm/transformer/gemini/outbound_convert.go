@@ -181,9 +181,14 @@ func convertLLMToGeminiRequestWithConfig(chatReq *llm.Request, config *Config) *
 
 	// Convert tools
 	if len(chatReq.Tools) > 0 {
-		functionDeclarations := make([]*FunctionDeclaration, 0, len(chatReq.Tools))
+		tools := make([]*Tool, 0)
+		functionDeclarations := make([]*FunctionDeclaration, 0)
+
+		var functionTool *Tool
+
 		for _, tool := range chatReq.Tools {
-			if tool.Type == "function" {
+			switch tool.Type {
+			case "function":
 				params := tool.Function.Parameters
 
 				params, err := xjson.CleanSchema(params, "$schema", "additionalProperties")
@@ -198,11 +203,26 @@ func convertLLMToGeminiRequestWithConfig(chatReq *llm.Request, config *Config) *
 					Parameters:  params,
 				}
 				functionDeclarations = append(functionDeclarations, fd)
+
+				if functionTool == nil {
+					functionTool = &Tool{}
+					tools = append(tools, functionTool)
+				}
+
+			case "google_search":
+				tools = append(tools, &Tool{GoogleSearch: &GoogleSearch{}})
+
+			case "code_execution":
+				tools = append(tools, &Tool{CodeExecution: &CodeExecution{}})
 			}
 		}
 
-		if len(functionDeclarations) > 0 {
-			req.Tools = []*Tool{{FunctionDeclarations: functionDeclarations}}
+		if functionTool != nil {
+			functionTool.FunctionDeclarations = functionDeclarations
+		}
+
+		if len(tools) > 0 {
+			req.Tools = tools
 		}
 	}
 

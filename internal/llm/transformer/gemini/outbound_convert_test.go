@@ -453,6 +453,33 @@ func TestConvertLLMToGeminiRequest_Tools(t *testing.T) {
 			},
 		},
 		{
+			name: "request with url context tool",
+			input: &llm.Request{
+				Messages: []llm.Message{
+					{
+						Role: "user",
+						Content: llm.MessageContent{
+							Content: lo.ToPtr("Fetch URL content"),
+						},
+					},
+				},
+				Tools: []llm.Tool{
+					{
+						Type:       "url_context",
+						UrlContext: &llm.UrlContext{},
+					},
+				},
+			},
+			validate: func(t *testing.T, result *GenerateContentRequest) {
+				t.Helper()
+				require.Len(t, result.Tools, 1)
+				require.NotNil(t, result.Tools[0].UrlContext)
+				require.Nil(t, result.Tools[0].FunctionDeclarations)
+				require.Nil(t, result.Tools[0].GoogleSearch)
+				require.Nil(t, result.Tools[0].CodeExecution)
+			},
+		},
+		{
 			name: "request with mixed tools (function, google search, code execution)",
 			input: &llm.Request{
 				Messages: []llm.Message{

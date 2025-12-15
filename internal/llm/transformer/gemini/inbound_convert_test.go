@@ -352,6 +352,53 @@ func TestConvertGeminiToLLMRequest_Tools(t *testing.T) {
 			},
 		},
 		{
+			name: "request with url context tool",
+			input: &GenerateContentRequest{
+				Contents: []*Content{
+					{
+						Role: "user",
+						Parts: []*Part{
+							{Text: "Fetch URL content"},
+						},
+					},
+				},
+				Tools: []*Tool{
+					{UrlContext: &UrlContext{}},
+				},
+			},
+			validate: func(t *testing.T, result *llm.Request) {
+				t.Helper()
+				require.Len(t, result.Tools, 1)
+				require.Equal(t, "url_context", result.Tools[0].Type)
+				require.NotNil(t, result.Tools[0].UrlContext)
+			},
+		},
+		{
+			name: "request with all grounding tools",
+			input: &GenerateContentRequest{
+				Contents: []*Content{
+					{
+						Role: "user",
+						Parts: []*Part{
+							{Text: "Use all tools"},
+						},
+					},
+				},
+				Tools: []*Tool{
+					{GoogleSearch: &GoogleSearch{}},
+					{CodeExecution: &CodeExecution{}},
+					{UrlContext: &UrlContext{}},
+				},
+			},
+			validate: func(t *testing.T, result *llm.Request) {
+				t.Helper()
+				require.Len(t, result.Tools, 3)
+				require.Equal(t, "google_search", result.Tools[0].Type)
+				require.Equal(t, "code_execution", result.Tools[1].Type)
+				require.Equal(t, "url_context", result.Tools[2].Type)
+			},
+		},
+		{
 			name: "request with tool config AUTO",
 			input: &GenerateContentRequest{
 				Contents: []*Content{

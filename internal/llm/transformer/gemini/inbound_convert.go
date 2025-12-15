@@ -147,6 +147,15 @@ func convertGeminiToLLMRequest(geminiReq *GenerateContentRequest) (*llm.Request,
 				}
 				tools = append(tools, llmTool)
 			}
+
+			// Handle URL Context tool
+			if tool.UrlContext != nil {
+				llmTool := llm.Tool{
+					Type:       "url_context",
+					UrlContext: &llm.UrlContext{},
+				}
+				tools = append(tools, llmTool)
+			}
 		}
 
 		chatReq.Tools = tools

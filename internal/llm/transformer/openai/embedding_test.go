@@ -190,6 +190,66 @@ func TestEmbeddingInboundTransformer_TransformRequest(t *testing.T) {
 		require.Contains(t, err.Error(), "unsupported content type")
 	})
 
+	t.Run("valid token ids input", func(t *testing.T) {
+		reqBody := map[string]any{
+			"model": "text-embedding-ada-002",
+			"input": []int{1234, 5678, 9012},
+		}
+		body, err := json.Marshal(reqBody)
+		require.NoError(t, err)
+
+		httpReq := &httpclient.Request{
+			Body: body,
+			Headers: http.Header{
+				"Content-Type": []string{"application/json"},
+			},
+		}
+
+		llmReq, err := transformer.TransformRequest(context.Background(), httpReq)
+		require.NoError(t, err)
+		require.NotNil(t, llmReq)
+	})
+
+	t.Run("valid nested token ids input", func(t *testing.T) {
+		reqBody := map[string]any{
+			"model": "text-embedding-ada-002",
+			"input": [][]int{{1234, 5678}, {9012, 3456}},
+		}
+		body, err := json.Marshal(reqBody)
+		require.NoError(t, err)
+
+		httpReq := &httpclient.Request{
+			Body: body,
+			Headers: http.Header{
+				"Content-Type": []string{"application/json"},
+			},
+		}
+
+		llmReq, err := transformer.TransformRequest(context.Background(), httpReq)
+		require.NoError(t, err)
+		require.NotNil(t, llmReq)
+	})
+
+	t.Run("empty nested array input", func(t *testing.T) {
+		reqBody := map[string]any{
+			"model": "text-embedding-ada-002",
+			"input": [][]int{{}, {1234}},
+		}
+		body, err := json.Marshal(reqBody)
+		require.NoError(t, err)
+
+		httpReq := &httpclient.Request{
+			Body: body,
+			Headers: http.Header{
+				"Content-Type": []string{"application/json"},
+			},
+		}
+
+		_, err = transformer.TransformRequest(context.Background(), httpReq)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "input[0] cannot be empty array")
+	})
+
 	t.Run("invalid json body", func(t *testing.T) {
 		httpReq := &httpclient.Request{
 			Body: []byte("not valid json"),
@@ -358,7 +418,8 @@ func TestEmbeddingOutboundTransformer_TransformResponse(t *testing.T) {
 
 		_, err := transformer.TransformResponse(context.Background(), httpResp)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "HTTP error 400")
+		// 现在返回的是 *llm.ResponseError，检查 OpenAI 格式的错误消息
+		require.Contains(t, err.Error(), "Invalid request")
 	})
 
 	t.Run("http error 500", func(t *testing.T) {
@@ -369,7 +430,8 @@ func TestEmbeddingOutboundTransformer_TransformResponse(t *testing.T) {
 
 		_, err := transformer.TransformResponse(context.Background(), httpResp)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "HTTP error 500")
+		// 现在返回的是 *llm.ResponseError，检查 OpenAI 格式的错误消息
+		require.Contains(t, err.Error(), "Internal server error")
 	})
 
 	t.Run("empty response body", func(t *testing.T) {

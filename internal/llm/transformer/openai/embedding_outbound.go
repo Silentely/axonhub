@@ -121,9 +121,14 @@ func (t *EmbeddingOutboundTransformer) TransformResponse(
 		return nil, fmt.Errorf("http response is nil")
 	}
 
-	// 检查 HTTP 状态码，4xx/5xx 应该返回错误
+	// 检查 HTTP 状态码，4xx/5xx 应该返回标准格式的错误
+	// 注意：httpclient 通常已经在 4xx/5xx 时返回 *httpclient.Error，
+	// 这里作为防御性代码，确保错误格式符合 OpenAI 规范
 	if httpResp.StatusCode >= 400 {
-		return nil, fmt.Errorf("HTTP error %d: %s", httpResp.StatusCode, string(httpResp.Body))
+		return nil, t.TransformError(ctx, &httpclient.Error{
+			StatusCode: httpResp.StatusCode,
+			Body:       httpResp.Body,
+		})
 	}
 
 	// 检查响应体是否为空

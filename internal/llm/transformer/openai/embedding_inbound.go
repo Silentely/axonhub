@@ -95,6 +95,11 @@ func (t *EmbeddingInboundTransformer) TransformRequest(
 }
 
 // validateEmbeddingInput 验证 embedding input 不为空。
+// OpenAI 规范支持以下输入类型：
+// - string: 单个字符串
+// - []string: 字符串数组
+// - []int: token IDs 数组
+// - [][]int: 多个 token IDs 数组（批量 token 输入）
 func validateEmbeddingInput(input any) error {
 	switch v := input.(type) {
 	case string:
@@ -107,10 +112,24 @@ func validateEmbeddingInput(input any) error {
 		}
 		// 检查数组中的每个元素
 		for i, item := range v {
-			if str, ok := item.(string); ok {
-				if strings.TrimSpace(str) == "" {
+			switch elem := item.(type) {
+			case string:
+				// 字符串数组：检查每个字符串不为空
+				if strings.TrimSpace(elem) == "" {
 					return fmt.Errorf("input[%d] cannot be empty string", i)
 				}
+			case float64:
+				// token ID 数组：数字类型，不需要额外校验
+				// JSON 解析后整数会变成 float64
+				continue
+			case []any:
+				// 嵌套数组：[][]int 的情况
+				if len(elem) == 0 {
+					return fmt.Errorf("input[%d] cannot be empty array", i)
+				}
+			default:
+				// 其他类型，透传给上游处理
+				continue
 			}
 		}
 	case []string:
@@ -120,6 +139,26 @@ func validateEmbeddingInput(input any) error {
 		for i, str := range v {
 			if strings.TrimSpace(str) == "" {
 				return fmt.Errorf("input[%d] cannot be empty string", i)
+			}
+		}
+	case []float64:
+		// token IDs 数组（整数在 JSON 解析后变成 float64）
+		if len(v) == 0 {
+			return fmt.Errorf("input cannot be empty array")
+		}
+	case []int:
+		// token IDs 数组
+		if len(v) == 0 {
+			return fmt.Errorf("input cannot be empty array")
+		}
+	case [][]any:
+		// 批量 token IDs 数组
+		if len(v) == 0 {
+			return fmt.Errorf("input cannot be empty array")
+		}
+		for i, inner := range v {
+			if len(inner) == 0 {
+				return fmt.Errorf("input[%d] cannot be empty array", i)
 			}
 		}
 	}

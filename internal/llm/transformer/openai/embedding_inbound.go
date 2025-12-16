@@ -68,7 +68,7 @@ func (t *EmbeddingInboundTransformer) TransformRequest(
 
 	// 验证 input 不为空字符串或空数组
 	if err := validateEmbeddingInput(embReq.Input); err != nil {
-		return nil, fmt.Errorf("%w: %w", transformer.ErrInvalidRequest, err)
+		return nil, err
 	}
 
 	// 构建统一请求
@@ -107,11 +107,11 @@ func validateEmbeddingInput(input any) error {
 	switch v := input.(type) {
 	case string:
 		if strings.TrimSpace(v) == "" {
-			return fmt.Errorf("input cannot be empty string")
+			return fmt.Errorf("%w: input cannot be empty string", transformer.ErrInvalidRequest)
 		}
 	case []any:
 		if len(v) == 0 {
-			return fmt.Errorf("input cannot be empty array")
+			return fmt.Errorf("%w: input cannot be empty array", transformer.ErrInvalidRequest)
 		}
 		// 检查数组中的每个元素
 		for i, item := range v {
@@ -119,7 +119,7 @@ func validateEmbeddingInput(input any) error {
 			case string:
 				// 字符串数组：检查每个字符串不为空
 				if strings.TrimSpace(elem) == "" {
-					return fmt.Errorf("input[%d] cannot be empty string", i)
+					return fmt.Errorf("%w: input[%d] cannot be empty string", transformer.ErrInvalidRequest, i)
 				}
 			case float64:
 				// token ID 数组：数字类型，不需要额外校验
@@ -128,7 +128,7 @@ func validateEmbeddingInput(input any) error {
 			case []any:
 				// 嵌套数组：[][]int 的情况
 				if len(elem) == 0 {
-					return fmt.Errorf("input[%d] cannot be empty array", i)
+					return fmt.Errorf("%w: input[%d] cannot be empty array", transformer.ErrInvalidRequest, i)
 				}
 			default:
 				// 其他类型，透传给上游处理

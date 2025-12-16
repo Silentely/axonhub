@@ -100,8 +100,10 @@ func (t *EmbeddingInboundTransformer) TransformResponse(
 
 	// Extract the embedding response from ProviderData
 	var body []byte
+
 	if llmResp.ProviderData != nil {
 		var embResp objects.EmbeddingResponse
+
 		switch v := llmResp.ProviderData.(type) {
 		case objects.EmbeddingResponse:
 			embResp = v
@@ -109,12 +111,14 @@ func (t *EmbeddingInboundTransformer) TransformResponse(
 			if v == nil {
 				return nil, fmt.Errorf("embedding response provider data is nil")
 			}
+
 			embResp = *v
 		default:
 			return nil, fmt.Errorf("invalid provider data for embedding response")
 		}
 
 		var err error
+
 		body, err = json.Marshal(embResp)
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal embedding response: %w", err)

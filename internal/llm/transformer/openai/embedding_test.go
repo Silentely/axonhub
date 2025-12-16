@@ -17,7 +17,7 @@ func TestEmbeddingInboundTransformer_TransformRequest(t *testing.T) {
 	transformer := NewEmbeddingInboundTransformer()
 
 	t.Run("valid string input", func(t *testing.T) {
-		reqBody := map[string]interface{}{
+		reqBody := map[string]any{
 			"model": "text-embedding-ada-002",
 			"input": "The quick brown fox",
 		}
@@ -41,7 +41,7 @@ func TestEmbeddingInboundTransformer_TransformRequest(t *testing.T) {
 	})
 
 	t.Run("valid array input", func(t *testing.T) {
-		reqBody := map[string]interface{}{
+		reqBody := map[string]any{
 			"model": "text-embedding-ada-002",
 			"input": []string{"Hello", "World"},
 		}
@@ -61,7 +61,7 @@ func TestEmbeddingInboundTransformer_TransformRequest(t *testing.T) {
 	})
 
 	t.Run("missing model", func(t *testing.T) {
-		reqBody := map[string]interface{}{
+		reqBody := map[string]any{
 			"input": "test",
 		}
 		body, err := json.Marshal(reqBody)
@@ -80,7 +80,7 @@ func TestEmbeddingInboundTransformer_TransformRequest(t *testing.T) {
 	})
 
 	t.Run("missing input", func(t *testing.T) {
-		reqBody := map[string]interface{}{
+		reqBody := map[string]any{
 			"model": "text-embedding-ada-002",
 		}
 		body, err := json.Marshal(reqBody)
@@ -202,6 +202,7 @@ func TestEmbeddingInboundTransformer_TransformResponse(t *testing.T) {
 		require.Equal(t, "application/json", httpResp.Headers.Get("Content-Type"))
 
 		var returnedEmbResp objects.EmbeddingResponse
+
 		err = json.Unmarshal(httpResp.Body, &returnedEmbResp)
 		require.NoError(t, err)
 		require.Equal(t, "list", returnedEmbResp.Object)

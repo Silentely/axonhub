@@ -3,7 +3,7 @@ package objects
 // EmbeddingRequest represents an OpenAI-compatible embedding request payload.
 type EmbeddingRequest struct {
 	// Input text to embed. Can be a string or an array of strings/tokens according to OpenAI spec.
-	Input interface{} `json:"input"`
+	Input any `json:"input"`
 	// ID of the model to use.
 	Model string `json:"model"`
 	// Optional format of the returned embeddings: "float" (default) or "base64".
@@ -24,9 +24,9 @@ type EmbeddingResponse struct {
 
 // Embedding is a single embedding vector entry in the response.
 type Embedding struct {
-	Object    string      `json:"object"`
-	Embedding interface{} `json:"embedding"`
-	Index     int         `json:"index"`
+	Object    string `json:"object"`
+	Embedding any    `json:"embedding"`
+	Index     int    `json:"index"`
 }
 
 // Usage represents prompt/total token usage for embeddings.

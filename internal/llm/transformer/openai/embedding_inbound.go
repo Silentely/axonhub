@@ -97,9 +97,12 @@ func (t *EmbeddingInboundTransformer) TransformRequest(
 // validateEmbeddingInput 验证 embedding input 不为空。
 // OpenAI 规范支持以下输入类型：
 // - string: 单个字符串
-// - []string: 字符串数组
-// - []int: token IDs 数组
-// - [][]int: 多个 token IDs 数组（批量 token 输入）
+// - []string: 字符串数组（JSON 解析后为 []any）
+// - []int: token IDs 数组（JSON 解析后为 []any，元素为 float64）
+// - [][]int: 多个 token IDs 数组（JSON 解析后为 []any，元素为 []any）
+//
+// 注意：由于 Input 字段类型为 any，json.Unmarshal 会将所有数组解析为 []any，
+// 因此只需处理 string 和 []any 两种情况。
 func validateEmbeddingInput(input any) error {
 	switch v := input.(type) {
 	case string:
@@ -130,35 +133,6 @@ func validateEmbeddingInput(input any) error {
 			default:
 				// 其他类型，透传给上游处理
 				continue
-			}
-		}
-	case []string:
-		if len(v) == 0 {
-			return fmt.Errorf("input cannot be empty array")
-		}
-		for i, str := range v {
-			if strings.TrimSpace(str) == "" {
-				return fmt.Errorf("input[%d] cannot be empty string", i)
-			}
-		}
-	case []float64:
-		// token IDs 数组（整数在 JSON 解析后变成 float64）
-		if len(v) == 0 {
-			return fmt.Errorf("input cannot be empty array")
-		}
-	case []int:
-		// token IDs 数组
-		if len(v) == 0 {
-			return fmt.Errorf("input cannot be empty array")
-		}
-	case [][]any:
-		// 批量 token IDs 数组
-		if len(v) == 0 {
-			return fmt.Errorf("input cannot be empty array")
-		}
-		for i, inner := range v {
-			if len(inner) == 0 {
-				return fmt.Errorf("input[%d] cannot be empty array", i)
 			}
 		}
 	}

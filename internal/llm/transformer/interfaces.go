@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/looplj/axonhub/internal/llm"
+	"github.com/looplj/axonhub/internal/objects"
 	"github.com/looplj/axonhub/internal/pkg/httpclient"
 	"github.com/looplj/axonhub/internal/pkg/streams"
 )
@@ -57,4 +58,13 @@ type Outbound interface {
 	// e.g: the user request with OpenAI format, but the provider response with Claude format, the chunks is the Claude response format, the AggregateStreamChunks will convert
 	// the chunks to the OpenAI chat completion response format.
 	AggregateStreamChunks(ctx context.Context, chunks []*httpclient.StreamEvent) ([]byte, llm.ResponseMeta, error)
+}
+
+// Transformer represents a transformer that supports additional operations like Rerank.
+// This interface extends Outbound with methods for rerank and other advanced operations.
+type Transformer interface {
+	Outbound
+
+	// Rerank performs document reranking based on query relevance.
+	Rerank(ctx context.Context, req *objects.RerankRequest) (*objects.RerankResponse, error)
 }

@@ -41,10 +41,12 @@ func (h *RerankHandlers) Rerank(c *gin.Context) {
 	}
 
 	// Call business logic
-	resp, err := h.rerankService.Rerank(ctx, &req)
+	resp, statusCode, err := h.rerankService.Rerank(ctx, &req)
 	if err != nil {
-		log.Error(ctx, "rerank request failed", log.Cause(err))
-		JSONError(c, http.StatusInternalServerError, err)
+		log.Error(ctx, "rerank request failed",
+			log.Int("status_code", statusCode),
+			log.Cause(err))
+		JSONError(c, statusCode, err)
 
 		return
 	}

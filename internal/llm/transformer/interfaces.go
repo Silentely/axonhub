@@ -66,5 +66,7 @@ type Transformer interface {
 	Outbound
 
 	// Rerank performs document reranking based on query relevance.
-	Rerank(ctx context.Context, req *objects.RerankRequest) (*objects.RerankResponse, error)
+	// The httpClient parameter allows using a custom HTTP client with proxy/timeout configuration.
+	// If httpClient is nil, a default client will be used.
+	Rerank(ctx context.Context, req *objects.RerankRequest, httpClient *httpclient.HttpClient) (*objects.RerankResponse, error)
 }

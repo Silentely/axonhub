@@ -3,6 +3,7 @@ package openai
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -10,8 +11,20 @@ import (
 	"github.com/looplj/axonhub/internal/pkg/httpclient"
 )
 
+// RerankError represents an error response from the rerank API.
+type RerankError struct {
+	StatusCode int
+	Message    string
+}
+
+func (e *RerankError) Error() string {
+	return fmt.Sprintf("rerank error (status %d): %s", e.StatusCode, e.Message)
+}
+
 // Rerank sends a rerank request to the OpenAI-compatible rerank endpoint.
-func (t *OutboundTransformer) Rerank(ctx context.Context, req *objects.RerankRequest) (*objects.RerankResponse, error) {
+// The httpClient parameter allows using a custom HTTP client with proxy/timeout configuration.
+// If httpClient is nil, a default client will be used.
+func (t *OutboundTransformer) Rerank(ctx context.Context, req *objects.RerankRequest, httpClient *httpclient.HttpClient) (*objects.RerankResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("rerank request is nil")
 	}
@@ -27,6 +40,24 @@ func (t *OutboundTransformer) Rerank(ctx context.Context, req *objects.RerankReq
 
 	if len(req.Documents) == 0 {
 		return nil, fmt.Errorf("documents are required")
+	}
+
+	// Validate top_n if provided
+	if req.TopN != nil {
+		if *req.TopN <= 0 {
+			return nil, fmt.Errorf("top_n must be a positive integer")
+		}
+
+		if *req.TopN > len(req.Documents) {
+			return nil, fmt.Errorf("top_n (%d) cannot exceed the number of documents (%d)", *req.TopN, len(req.Documents))
+		}
+	}
+
+	// Validate documents are not empty strings
+	for i, doc := range req.Documents {
+		if doc == "" {
+			return nil, fmt.Errorf("document at index %d is empty", i)
+		}
 	}
 
 	// Marshal request body
@@ -72,17 +103,24 @@ func (t *OutboundTransformer) Rerank(ctx context.Context, req *objects.RerankReq
 		Auth:    auth,
 	}
 
-	// Create HTTP client and send request
-	client := httpclient.NewHttpClient()
+	// Use provided HTTP client or create a default one
+	client := httpClient
+	if client == nil {
+		client = httpclient.NewHttpClient()
+	}
 
 	httpResp, err := client.Do(ctx, httpReq)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send rerank request: %w", err)
-	}
+		// 从 httpclient.Error 提取状态码和响应体，转换为 RerankError
+		var httpErr *httpclient.Error
+		if errors.As(err, &httpErr) {
+			return nil, &RerankError{
+				StatusCode: httpErr.StatusCode,
+				Message:    string(httpErr.Body),
+			}
+		}
 
-	// Check for HTTP error status codes
-	if httpResp.StatusCode >= 400 {
-		return nil, fmt.Errorf("HTTP error %d: %s", httpResp.StatusCode, string(httpResp.Body))
+		return nil, fmt.Errorf("failed to send rerank request: %w", err)
 	}
 
 	// Check for empty response body

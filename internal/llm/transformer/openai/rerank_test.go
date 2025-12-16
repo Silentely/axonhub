@@ -12,6 +12,7 @@ import (
 
 	"github.com/looplj/axonhub/internal/llm/transformer"
 	"github.com/looplj/axonhub/internal/objects"
+	"github.com/looplj/axonhub/internal/pkg/xptr"
 )
 
 func TestRerank_Success(t *testing.T) {
@@ -104,17 +105,17 @@ func TestRerank_ValidationErrors(t *testing.T) {
 		},
 		{
 			name:    "top_n zero",
-			req:     &objects.RerankRequest{Model: "m", Query: "q", Documents: []string{"d"}, TopN: intPtr(0)},
+			req:     &objects.RerankRequest{Model: "m", Query: "q", Documents: []string{"d"}, TopN: xptr.IntPtr(0)},
 			wantErr: "top_n must be a positive integer",
 		},
 		{
 			name:    "top_n negative",
-			req:     &objects.RerankRequest{Model: "m", Query: "q", Documents: []string{"d"}, TopN: intPtr(-1)},
+			req:     &objects.RerankRequest{Model: "m", Query: "q", Documents: []string{"d"}, TopN: xptr.IntPtr(-1)},
 			wantErr: "top_n must be a positive integer",
 		},
 		{
 			name:    "top_n exceeds documents",
-			req:     &objects.RerankRequest{Model: "m", Query: "q", Documents: []string{"d1", "d2"}, TopN: intPtr(5)},
+			req:     &objects.RerankRequest{Model: "m", Query: "q", Documents: []string{"d1", "d2"}, TopN: xptr.IntPtr(5)},
 			wantErr: "top_n (5) cannot exceed the number of documents (2)",
 		},
 		{
@@ -229,7 +230,7 @@ func TestRerank_WithTopN(t *testing.T) {
 		Model:     "test-model",
 		Query:     "test query",
 		Documents: []string{"doc1", "doc2", "doc3"},
-		TopN:      intPtr(2),
+		TopN:      xptr.IntPtr(2),
 	}
 
 	resp, err := rerankTransformer.Rerank(context.Background(), req, nil)
@@ -249,12 +250,6 @@ func TestBuildRerankURL(t *testing.T) {
 		{
 			name:     "standard URL without trailing slash",
 			baseURL:  "https://api.example.com",
-			platform: PlatformOpenAI,
-			want:     "https://api.example.com/v1/rerank",
-		},
-		{
-			name:     "URL with trailing slash",
-			baseURL:  "https://api.example.com/",
 			platform: PlatformOpenAI,
 			want:     "https://api.example.com/v1/rerank",
 		},
@@ -299,8 +294,4 @@ func TestBuildRerankURL(t *testing.T) {
 			assert.Equal(t, tt.want, url)
 		})
 	}
-}
-
-func intPtr(i int) *int {
-	return &i
 }

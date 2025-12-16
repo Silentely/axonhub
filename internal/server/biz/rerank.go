@@ -43,16 +43,6 @@ type RerankService struct {
 	systemService  *SystemService
 }
 
-// RerankError represents an error with HTTP status code from upstream.
-type RerankError struct {
-	StatusCode int
-	Message    string
-}
-
-func (e *RerankError) Error() string {
-	return e.Message
-}
-
 // Rerank performs document reranking using the specified model and channel.
 func (s *RerankService) Rerank(ctx context.Context, req *objects.RerankRequest) (*objects.RerankResponse, int, error) {
 	startTime := time.Now()
@@ -76,7 +66,7 @@ func (s *RerankService) Rerank(ctx context.Context, req *objects.RerankRequest) 
 	}
 
 	// Create request record for logging
-	reqBody := mustMarshalJSON(req)
+	reqBody := marshalJSONWithFallback(ctx, req)
 	llmRequest := &llm.Request{
 		Model:  req.Model,
 		Stream: boolPtr(false),
@@ -322,10 +312,12 @@ func boolPtr(b bool) *bool {
 	return &b
 }
 
-// mustMarshalJSON marshals v to JSON bytes, returns empty JSON object on error.
-func mustMarshalJSON(v any) []byte {
+// marshalJSONWithFallback marshals v to JSON bytes. It returns an empty JSON object
+// and logs a warning if an error occurs.
+func marshalJSONWithFallback(ctx context.Context, v any) []byte {
 	data, err := json.Marshal(v)
 	if err != nil {
+		log.Warn(ctx, "failed to marshal JSON, falling back to empty object", log.Cause(err))
 		return []byte("{}")
 	}
 

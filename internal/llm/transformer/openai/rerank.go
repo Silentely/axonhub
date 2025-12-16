@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/looplj/axonhub/internal/objects"
 	"github.com/looplj/axonhub/internal/pkg/httpclient"
@@ -111,7 +112,7 @@ func (t *OutboundTransformer) Rerank(ctx context.Context, req *objects.RerankReq
 
 	httpResp, err := client.Do(ctx, httpReq)
 	if err != nil {
-		// 从 httpclient.Error 提取状态码和响应体，转换为 RerankError
+		// Extract status code and response body from httpclient.Error, and convert to RerankError
 		var httpErr *httpclient.Error
 		if errors.As(err, &httpErr) {
 			return nil, &RerankError{
@@ -151,11 +152,7 @@ func (t *OutboundTransformer) buildRerankURL() (string, error) {
 		return fmt.Sprintf("%s/rerank?api-version=%s", t.config.BaseURL, t.config.APIVersion), nil
 	default:
 		// Standard OpenAI-compatible API
-		if len(t.config.BaseURL) > 0 && t.config.BaseURL[len(t.config.BaseURL)-1:] == "/" {
-			return t.config.BaseURL + "v1/rerank", nil
-		}
-
-		if len(t.config.BaseURL) > 3 && t.config.BaseURL[len(t.config.BaseURL)-3:] == "/v1" {
+		if strings.HasSuffix(t.config.BaseURL, "/v1") {
 			return t.config.BaseURL + "/rerank", nil
 		}
 

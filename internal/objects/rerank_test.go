@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/looplj/axonhub/internal/pkg/xptr"
 )
 
 func TestRerankRequestJSON(t *testing.T) {
@@ -13,7 +15,7 @@ func TestRerankRequestJSON(t *testing.T) {
 		Model:     "test-model",
 		Query:     "test query",
 		Documents: []string{"doc1", "doc2", "doc3"},
-		TopN:      intPtr(2),
+		TopN:      xptr.IntPtr(2),
 	}
 
 	data, err := json.Marshal(req)
@@ -63,8 +65,4 @@ func TestRerankResponseJSON(t *testing.T) {
 	assert.Equal(t, resp.Results[0].RelevanceScore, decoded.Results[0].RelevanceScore)
 	assert.NotNil(t, decoded.Usage)
 	assert.Equal(t, resp.Usage.TotalTokens, decoded.Usage.TotalTokens)
-}
-
-func intPtr(i int) *int {
-	return &i
 }

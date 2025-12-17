@@ -3,6 +3,7 @@ package llm
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 )
 
 // Tool represents a function tool.
@@ -190,13 +191,9 @@ func ContainsGoogleNativeTools(tools []Tool) bool {
 }
 
 // IsGoogleNativeTool checks if a single tool is a Google native tool.
+// Google native tools follow the naming convention "google_*".
 func IsGoogleNativeTool(tool Tool) bool {
-	switch tool.Type {
-	case ToolTypeGoogleSearch, ToolTypeGoogleCodeExecution, ToolTypeGoogleUrlContext:
-		return true
-	}
-
-	return false
+	return strings.HasPrefix(tool.Type, "google_")
 }
 
 // FilterGoogleNativeTools removes Google native tools from the tools slice.

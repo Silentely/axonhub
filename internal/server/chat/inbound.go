@@ -274,6 +274,9 @@ func selectChannels(inbound *PersistentInboundTransformer) pipeline.Middleware {
 			}
 		}
 
+		// 应用 Google 原生工具过滤（优先选择支持原生工具的渠道）
+		selector = NewGoogleNativeToolsSelector(selector)
+
 		if inbound.state.LoadBalancer != nil {
 			selector = NewLoadBalancedSelector(selector, inbound.state.LoadBalancer)
 		}

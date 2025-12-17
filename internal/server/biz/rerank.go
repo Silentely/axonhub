@@ -20,26 +20,108 @@ import (
 	"github.com/looplj/axonhub/internal/pkg/xcontext"
 )
 
+// RerankChannelSelector defines the interface for selecting channels for rerank.
+type RerankChannelSelector interface {
+	Select(ctx context.Context, req *llm.RerankRequest) ([]*Channel, error)
+}
+
+// DefaultRerankChannelSelector selects channels that support the requested model.
+type DefaultRerankChannelSelector struct {
+	channelService *ChannelService
+}
+
+// NewDefaultRerankChannelSelector creates a basic selector that returns all enabled channels supporting the model.
+func NewDefaultRerankChannelSelector(channelService *ChannelService) *DefaultRerankChannelSelector {
+	return &DefaultRerankChannelSelector{
+		channelService: channelService,
+	}
+}
+
+// Select returns all enabled channels that support the given model.
+func (s *DefaultRerankChannelSelector) Select(ctx context.Context, req *llm.RerankRequest) ([]*Channel, error) {
+	var channels []*Channel
+
+	for _, ch := range s.channelService.EnabledChannels {
+		if ch.IsModelSupported(req.Model) {
+			channels = append(channels, ch)
+		}
+	}
+
+	return channels, nil
+}
+
+// LoadBalancedRerankChannelSelector wraps a selector and applies load balancing.
+type LoadBalancedRerankChannelSelector struct {
+	wrapped      RerankChannelSelector
+	loadBalancer RerankLoadBalancer
+}
+
+// RerankLoadBalancer defines the interface for load balancing rerank channels.
+type RerankLoadBalancer interface {
+	Sort(ctx context.Context, channels []*Channel, model string) []*Channel
+}
+
+// NewLoadBalancedRerankChannelSelector creates a load-balanced selector.
+func NewLoadBalancedRerankChannelSelector(wrapped RerankChannelSelector, loadBalancer RerankLoadBalancer) *LoadBalancedRerankChannelSelector {
+	return &LoadBalancedRerankChannelSelector{
+		wrapped:      wrapped,
+		loadBalancer: loadBalancer,
+	}
+}
+
+// Select returns channels sorted by load balancing priority.
+func (s *LoadBalancedRerankChannelSelector) Select(ctx context.Context, req *llm.RerankRequest) ([]*Channel, error) {
+	channels, err := s.wrapped.Select(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(channels) <= 1 {
+		return channels, nil
+	}
+
+	// Apply load balancing to sort channels by priority
+	sortedChannels := s.loadBalancer.Sort(ctx, channels, req.Model)
+
+	if log.DebugEnabled(ctx) {
+		log.Debug(ctx, "Load balanced rerank channels",
+			log.String("model", req.Model),
+			log.Int("total_channels", len(channels)),
+			log.Int("selected_channels", len(sortedChannels)))
+	}
+
+	return sortedChannels, nil
+}
+
 type RerankServiceParams struct {
 	fx.In
 
-	ChannelService *ChannelService
-	RequestService *RequestService
-	SystemService  *SystemService
+	ChannelService  *ChannelService
+	RequestService  *RequestService
+	SystemService   *SystemService
+	ChannelSelector RerankChannelSelector `optional:"true"`
 }
 
 func NewRerankService(params RerankServiceParams) *RerankService {
+	// Use default selector if not provided
+	channelSelector := params.ChannelSelector
+	if channelSelector == nil {
+		channelSelector = NewDefaultRerankChannelSelector(params.ChannelService)
+	}
+
 	return &RerankService{
-		channelService: params.ChannelService,
-		requestService: params.RequestService,
-		systemService:  params.SystemService,
+		channelService:  params.ChannelService,
+		requestService:  params.RequestService,
+		systemService:   params.SystemService,
+		channelSelector: channelSelector,
 	}
 }
 
 type RerankService struct {
-	channelService *ChannelService
-	requestService *RequestService
-	systemService  *SystemService
+	channelService  *ChannelService
+	requestService  *RequestService
+	systemService   *SystemService
+	channelSelector RerankChannelSelector
 }
 
 // Rerank performs document reranking using the specified model and channel.
@@ -51,8 +133,12 @@ func (s *RerankService) Rerank(ctx context.Context, req *llm.RerankRequest) (*ll
 		return nil, http.StatusBadRequest, err
 	}
 
-	// Find all suitable channels for the model (for load balancing)
-	channels := s.findSupportingChannels(req.Model)
+	// Select channels using the channel selector
+	channels, err := s.channelSelector.Select(ctx, req)
+	if err != nil {
+		return nil, http.StatusInternalServerError, fmt.Errorf("failed to select channels: %w", err)
+	}
+
 	if len(channels) == 0 {
 		return nil, http.StatusBadRequest, fmt.Errorf("no channel supports model: %s", req.Model)
 	}
@@ -90,7 +176,7 @@ func (s *RerankService) Rerank(ctx context.Context, req *llm.RerankRequest) (*ll
 		resp, statusCode, err := s.tryChannel(ctx, req, selectedChannel, requestRecord, reqBody)
 		if err == nil {
 			// Success - update request status
-			s.updateRequestSuccess(ctx, requestRecord, selectedChannel.ID, resp, startTime)
+			s.updateRequestSuccess(ctx, requestRecord, resp, startTime)
 
 			return resp, http.StatusOK, nil
 		}
@@ -160,19 +246,6 @@ func (s *RerankService) validateRequest(req *llm.RerankRequest) error {
 	return nil
 }
 
-// findSupportingChannels returns all enabled channels that support the given model.
-func (s *RerankService) findSupportingChannels(model string) []*Channel {
-	var channels []*Channel
-
-	for _, ch := range s.channelService.EnabledChannels {
-		if ch.IsModelSupported(model) {
-			channels = append(channels, ch)
-		}
-	}
-
-	return channels
-}
-
 // tryChannel attempts to execute rerank on a specific channel.
 func (s *RerankService) tryChannel(
 	ctx context.Context,
@@ -209,16 +282,21 @@ func (s *RerankService) tryChannel(
 
 	// Update request channel_id
 	if requestRecord != nil {
-		if err := s.requestService.UpdateRequestChannelID(ctx, requestRecord.ID, channel.ID); err != nil {
-			log.Warn(ctx, "failed to update request channel_id", log.Cause(err))
+		persistCtx, cancel := xcontext.DetachWithTimeout(ctx, time.Second*5)
+		defer cancel()
+
+		if err := s.requestService.UpdateRequestChannelID(persistCtx, requestRecord.ID, channel.ID); err != nil {
+			log.Warn(persistCtx, "failed to update request channel_id", log.Cause(err))
 		}
 	}
 
 	// Create execution record
 	var executionRecord *ent.RequestExecution
 	if requestRecord != nil {
+		// Marshal the mapped request body to record the actual request sent to the channel
+		mappedReqBody := marshalJSONWithFallback(ctx, mappedReq)
 		channelRequest := httpclient.Request{
-			Body: reqBody,
+			Body: mappedReqBody,
 		}
 		executionRecord, err = s.requestService.CreateRequestExecution(
 			ctx,
@@ -274,7 +352,6 @@ func (s *RerankService) tryChannel(
 func (s *RerankService) updateRequestSuccess(
 	ctx context.Context,
 	requestRecord *ent.Request,
-	channelID int,
 	resp *llm.RerankResponse,
 	startTime time.Time,
 ) {

@@ -199,22 +199,22 @@ func TestOutboundTransformer_TransformResponse(t *testing.T) {
 			httpResp: &httpclient.Response{
 				StatusCode: http.StatusOK,
 				Body: []byte(`{
-					"id": "msg_123",
-					"type": "message",
-					"role": "assistant",
-					"content": [
-						{
-							"type": "text",
-							"text": "Hello! How can I help you?"
-						}
-					],
-					"model": "claude-3-sonnet-20240229",
-					"stop_reason": "end_turn",
-					"usage": {
-						"input_tokens": 10,
-						"output_tokens": 20
-					}
-				}`),
+                    "id": "msg_123",
+                    "type": "message",
+                    "role": "assistant",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Hello! How can I help you?"
+                        }
+                    ],
+                    "model": "claude-3-sonnet-20240229",
+                    "stop_reason": "end_turn",
+                    "usage": {
+                        "input_tokens": 10,
+                        "output_tokens": 20
+                    }
+                }`),
 			},
 			expectError: false,
 		},
@@ -223,22 +223,22 @@ func TestOutboundTransformer_TransformResponse(t *testing.T) {
 			httpResp: &httpclient.Response{
 				StatusCode: http.StatusOK,
 				Body: []byte(`{
-					"id": "msg_456",
-					"type": "message",
-					"role": "assistant",
-					"content": [
-						{
-							"type": "text",
-							"text": "I can see"
-						},
-						{
-							"type": "text",
-							"text": " an image."
-						}
-					],
-					"model": "claude-3-sonnet-20240229",
-					"stop_reason": "end_turn"
-				}`),
+                    "id": "msg_456",
+                    "type": "message",
+                    "role": "assistant",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "I can see"
+                        },
+                        {
+                            "type": "text",
+                            "text": " an image."
+                        }
+                    ],
+                    "model": "claude-3-sonnet-20240229",
+                    "stop_reason": "end_turn"
+                }`),
 			},
 			expectError: false,
 		},
@@ -495,17 +495,17 @@ func TestOutboundTransformer_ToolUse(t *testing.T) {
 						anthropicReq.Tools[0].Description,
 					)
 					// Compare JSON content flexibly (ignore whitespace differences)
-					expectedSchema := map[string]interface{}{
+					expectedSchema := map[string]any{
 						"type": "object",
-						"properties": map[string]interface{}{
-							"location": map[string]interface{}{
+						"properties": map[string]any{
+							"location": map[string]any{
 								"type": "string",
 							},
 						},
-						"required": []interface{}{"location"},
+						"required": []any{"location"},
 					}
 
-					var actualSchema map[string]interface{}
+					var actualSchema map[string]any
 
 					unmarshalErr := json.Unmarshal(anthropicReq.Tools[0].InputSchema, &actualSchema)
 					require.NoError(t, unmarshalErr)
@@ -649,6 +649,51 @@ func TestOutboundTransformer_ToolUse(t *testing.T) {
 					err := json.Unmarshal(result.Body, &anthropicReq)
 					require.NoError(t, err)
 					require.Nil(t, anthropicReq.Tools) // Should not include tools field if empty
+				},
+			},
+			{
+				name: "request with web_search tool (native Anthropic)",
+				chatReq: &llm.Request{
+					Model:     "claude-3-sonnet-20240229",
+					MaxTokens: func() *int64 { v := int64(1024); return &v }(),
+					Messages: []llm.Message{
+						{
+							Role: "user",
+							Content: llm.MessageContent{
+								Content: func() *string { s := "Search the web for latest AI news"; return &s }(),
+							},
+						},
+					},
+					Tools: []llm.Tool{
+						{
+							Type: "function",
+							Function: llm.Function{
+								Name:        "web_search",
+								Description: "Search the web for information",
+								Parameters: json.RawMessage(
+									`{"type": "object", "properties": {"query": {"type": "string"}}}`,
+								),
+							},
+						},
+					},
+				},
+				expectError: false,
+				validate: func(t *testing.T, result *httpclient.Request) {
+					t.Helper()
+
+					var anthropicReq MessageRequest
+
+					err := json.Unmarshal(result.Body, &anthropicReq)
+					require.NoError(t, err)
+					require.NotNil(t, anthropicReq.Tools)
+					require.Len(t, anthropicReq.Tools, 1)
+					require.Equal(t, "web_search", anthropicReq.Tools[0].Name)
+					require.Equal(t, ToolTypeWebSearch20250305, anthropicReq.Tools[0].Type)
+					require.Empty(t, anthropicReq.Tools[0].Description)
+					require.Empty(t, anthropicReq.Tools[0].InputSchema)
+
+					// Verify beta header is set
+					require.Equal(t, "web-search-2025-03-05", result.Headers.Get("Anthropic-Beta"))
 				},
 			},
 			{
@@ -895,15 +940,15 @@ func TestOutboundTransformer_TransformRequest_WithTestData(t *testing.T) {
 				require.Equal(t, "Accepts a place as an address, then returns the latitude and longitude coordinates.", anthropicReq.Tools[0].Description)
 
 				// Verify tool input schema
-				var schema map[string]interface{}
+				var schema map[string]any
 
 				err = json.Unmarshal(anthropicReq.Tools[0].InputSchema, &schema)
 				require.NoError(t, err)
 				require.Equal(t, "object", schema["type"])
 
-				properties, ok := schema["properties"].(map[string]interface{})
+				properties, ok := schema["properties"].(map[string]any)
 				require.True(t, ok)
-				location, ok := properties["location"].(map[string]interface{})
+				location, ok := properties["location"].(map[string]any)
 				require.True(t, ok)
 				require.Equal(t, "string", location["type"])
 				require.Equal(t, "The location to look up.", location["description"])

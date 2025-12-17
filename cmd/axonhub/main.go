@@ -237,7 +237,7 @@ func configGet() {
 		os.Exit(1)
 	}
 
-	var value interface{}
+	var value any
 
 	switch key {
 	case "server.port":

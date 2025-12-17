@@ -152,12 +152,12 @@ type ToolChoice struct {
 
 // Tool represents a tool definition for Anthropic API.
 type Tool struct {
-	// Ensure the omitempty, otherwise it will be sent empty string to the API, will cause some providers ignore the tool.
-	// For now, we only support function (client tool or custom tool in anthropic) tool, so we can just omit the type.
-	// Type         string          `json:"type,omitempty"`
+	// Type is used for native tools (e.g., "web_search_20250305").
+	// For custom/function tools, this field is omitted.
+	Type         string          `json:"type,omitempty"`
 	Name         string          `json:"name"`
-	Description  string          `json:"description"`
-	InputSchema  json.RawMessage `json:"input_schema"`
+	Description  string          `json:"description,omitempty"`
+	InputSchema  json.RawMessage `json:"input_schema,omitempty"`
 	CacheControl *CacheControl   `json:"cache_control,omitempty"`
 }
 
@@ -175,9 +175,9 @@ type CacheControl struct {
 
 // InputSchema represents the JSON schema for tool input.
 type InputSchema struct {
-	Type       string                 `json:"type"`
-	Properties map[string]interface{} `json:"properties,omitempty"`
-	Required   []string               `json:"required,omitempty"`
+	Type       string         `json:"type"`
+	Properties map[string]any `json:"properties,omitempty"`
+	Required   []string       `json:"required,omitempty"`
 }
 
 // MessageParam represents a message in Anthropic format.

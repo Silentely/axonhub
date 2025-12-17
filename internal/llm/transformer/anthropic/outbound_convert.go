@@ -9,6 +9,13 @@ import (
 	"github.com/looplj/axonhub/internal/pkg/xurl"
 )
 
+const (
+	// ToolTypeWebSearch20250305 is the native web search tool type for Anthropic (Beta).
+	ToolTypeWebSearch20250305 = "web_search_20250305"
+
+	anthropicWebSearchFunctionName = "web_search"
+)
+
 // convertToAnthropicRequest converts ChatCompletionRequest to Anthropic MessageRequest.
 // Deprecated: Use convertToAnthropicRequestWithConfig instead.
 func convertToAnthropicRequest(chatReq *llm.Request) *MessageRequest {
@@ -76,18 +83,35 @@ func convertTools(tools []llm.Tool) []Tool {
 		return nil
 	}
 
-	return lo.FilterMap(tools, func(tool llm.Tool, _ int) (Tool, bool) {
-		if tool.Type != "function" {
-			return Tool{}, false
+	anthropicTools := make([]Tool, 0, len(tools))
+
+	for _, tool := range tools {
+		if tool.Type != llm.ToolType {
+			continue
 		}
 
-		return Tool{
+		if tool.Function.Name == anthropicWebSearchFunctionName {
+			anthropicTools = append(anthropicTools, Tool{
+				Type: ToolTypeWebSearch20250305,
+				Name: anthropicWebSearchFunctionName,
+			})
+
+			continue
+		}
+
+		anthropicTools = append(anthropicTools, Tool{
 			Name:         tool.Function.Name,
 			Description:  tool.Function.Description,
 			InputSchema:  tool.Function.Parameters,
 			CacheControl: convertToAnthropicCacheControl(tool.CacheControl),
-		}, true
-	})
+		})
+	}
+
+	if len(anthropicTools) == 0 {
+		return nil
+	}
+
+	return anthropicTools
 }
 
 // convertStopSequences converts stop sequences.

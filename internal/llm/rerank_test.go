@@ -1,13 +1,12 @@
-package objects
+package llm
 
 import (
 	"encoding/json"
 	"testing"
 
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/looplj/axonhub/internal/pkg/xptr"
 )
 
 func TestRerankRequestJSON(t *testing.T) {
@@ -15,7 +14,7 @@ func TestRerankRequestJSON(t *testing.T) {
 		Model:     "test-model",
 		Query:     "test query",
 		Documents: []string{"doc1", "doc2", "doc3"},
-		TopN:      xptr.IntPtr(2),
+		TopN:      lo.ToPtr(2),
 	}
 
 	data, err := json.Marshal(req)
@@ -46,7 +45,7 @@ func TestRerankResponseJSON(t *testing.T) {
 				Document:       "doc2",
 			},
 		},
-		Usage: &Usage{
+		Usage: &RerankUsage{
 			PromptTokens: 10,
 			TotalTokens:  15,
 		},

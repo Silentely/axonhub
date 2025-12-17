@@ -1,4 +1,4 @@
-package objects
+package llm
 
 // RerankRequest represents a rerank request.
 type RerankRequest struct {
@@ -21,7 +21,7 @@ type RerankResponse struct {
 	Results []RerankResult `json:"results"`
 
 	// Usage contains token usage information if available.
-	Usage *Usage `json:"usage,omitempty"`
+	Usage *RerankUsage `json:"usage,omitempty"`
 }
 
 // RerankResult represents a single reranked document result.
@@ -36,3 +36,8 @@ type RerankResult struct {
 	Document string `json:"document,omitempty"`
 }
 
+// RerankUsage represents token usage for rerank requests.
+type RerankUsage struct {
+	PromptTokens int `json:"prompt_tokens"`
+	TotalTokens  int `json:"total_tokens"`
+}

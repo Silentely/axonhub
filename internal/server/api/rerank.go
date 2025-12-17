@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 
+	"github.com/looplj/axonhub/internal/llm"
 	"github.com/looplj/axonhub/internal/log"
-	"github.com/looplj/axonhub/internal/objects"
 	"github.com/looplj/axonhub/internal/server/biz"
 )
 
@@ -32,7 +32,7 @@ func (h *RerankHandlers) Rerank(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	// Parse request body
-	var req objects.RerankRequest
+	var req llm.RerankRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Warn(ctx, "invalid rerank request", log.Cause(err))
 		JSONError(c, http.StatusBadRequest, err)

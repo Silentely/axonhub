@@ -16,7 +16,6 @@ import (
 	"github.com/looplj/axonhub/internal/llm/transformer"
 	"github.com/looplj/axonhub/internal/llm/transformer/openai"
 	"github.com/looplj/axonhub/internal/log"
-	"github.com/looplj/axonhub/internal/objects"
 	"github.com/looplj/axonhub/internal/pkg/httpclient"
 	"github.com/looplj/axonhub/internal/pkg/xcontext"
 )
@@ -44,7 +43,7 @@ type RerankService struct {
 }
 
 // Rerank performs document reranking using the specified model and channel.
-func (s *RerankService) Rerank(ctx context.Context, req *objects.RerankRequest) (*objects.RerankResponse, int, error) {
+func (s *RerankService) Rerank(ctx context.Context, req *llm.RerankRequest) (*llm.RerankResponse, int, error) {
 	startTime := time.Now()
 
 	// Validate request
@@ -69,7 +68,7 @@ func (s *RerankService) Rerank(ctx context.Context, req *objects.RerankRequest) 
 	reqBody := marshalJSONWithFallback(ctx, req)
 	llmRequest := &llm.Request{
 		Model:  req.Model,
-		Stream: boolPtr(false),
+		Stream: lo.ToPtr(false),
 	}
 	httpRequest := &httpclient.Request{
 		Body: reqBody,
@@ -123,7 +122,7 @@ func (s *RerankService) Rerank(ctx context.Context, req *objects.RerankRequest) 
 }
 
 // validateRequest validates the rerank request parameters.
-func (s *RerankService) validateRequest(req *objects.RerankRequest) error {
+func (s *RerankService) validateRequest(req *llm.RerankRequest) error {
 	if req == nil {
 		return fmt.Errorf("rerank request is nil")
 	}
@@ -177,11 +176,11 @@ func (s *RerankService) findSupportingChannels(model string) []*Channel {
 // tryChannel attempts to execute rerank on a specific channel.
 func (s *RerankService) tryChannel(
 	ctx context.Context,
-	req *objects.RerankRequest,
+	req *llm.RerankRequest,
 	channel *Channel,
 	requestRecord *ent.Request,
 	reqBody []byte,
-) (*objects.RerankResponse, int, error) {
+) (*llm.RerankResponse, int, error) {
 	// Check if the transformer supports Rerank
 	rerankTransformer, ok := channel.Outbound.(transformer.Transformer)
 	if !ok {
@@ -195,7 +194,7 @@ func (s *RerankService) tryChannel(
 	}
 
 	// Create a copy of request with mapped model
-	mappedReq := &objects.RerankRequest{
+	mappedReq := &llm.RerankRequest{
 		Model:     actualModel,
 		Query:     req.Query,
 		Documents: req.Documents,
@@ -276,7 +275,7 @@ func (s *RerankService) updateRequestSuccess(
 	ctx context.Context,
 	requestRecord *ent.Request,
 	channelID int,
-	resp *objects.RerankResponse,
+	resp *llm.RerankResponse,
 	startTime time.Time,
 ) {
 	latency := time.Since(startTime)
@@ -305,11 +304,6 @@ func (s *RerankService) updateRequestFailed(ctx context.Context, requestRecord *
 			log.Warn(persistCtx, "failed to update request status", log.Cause(updateErr))
 		}
 	}
-}
-
-// boolPtr returns a pointer to the bool value.
-func boolPtr(b bool) *bool {
-	return &b
 }
 
 // marshalJSONWithFallback marshals v to JSON bytes. It returns an empty JSON object

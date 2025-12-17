@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/looplj/axonhub/internal/llm"
-	"github.com/looplj/axonhub/internal/objects"
 	"github.com/looplj/axonhub/internal/pkg/httpclient"
 	"github.com/looplj/axonhub/internal/pkg/streams"
 )
@@ -68,5 +67,5 @@ type Transformer interface {
 	// Rerank performs document reranking based on query relevance.
 	// The httpClient parameter allows using a custom HTTP client with proxy/timeout configuration.
 	// If httpClient is nil, a default client will be used.
-	Rerank(ctx context.Context, req *objects.RerankRequest, httpClient *httpclient.HttpClient) (*objects.RerankResponse, error)
+	Rerank(ctx context.Context, req *llm.RerankRequest, httpClient *httpclient.HttpClient) (*llm.RerankResponse, error)
 }

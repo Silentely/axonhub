@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/looplj/axonhub/internal/objects"
+	"github.com/looplj/axonhub/internal/llm"
 	"github.com/looplj/axonhub/internal/pkg/httpclient"
 )
 
@@ -25,7 +25,7 @@ func (e *RerankError) Error() string {
 // Rerank sends a rerank request to the OpenAI-compatible rerank endpoint.
 // The httpClient parameter allows using a custom HTTP client with proxy/timeout configuration.
 // If httpClient is nil, a default client will be used.
-func (t *OutboundTransformer) Rerank(ctx context.Context, req *objects.RerankRequest, httpClient *httpclient.HttpClient) (*objects.RerankResponse, error) {
+func (t *OutboundTransformer) Rerank(ctx context.Context, req *llm.RerankRequest, httpClient *httpclient.HttpClient) (*llm.RerankResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("rerank request is nil")
 	}
@@ -130,7 +130,7 @@ func (t *OutboundTransformer) Rerank(ctx context.Context, req *objects.RerankReq
 	}
 
 	// Unmarshal response
-	var rerankResp objects.RerankResponse
+	var rerankResp llm.RerankResponse
 
 	err = json.Unmarshal(httpResp.Body, &rerankResp)
 	if err != nil {

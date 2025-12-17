@@ -7,12 +7,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/looplj/axonhub/internal/llm"
 	"github.com/looplj/axonhub/internal/llm/transformer"
-	"github.com/looplj/axonhub/internal/objects"
-	"github.com/looplj/axonhub/internal/pkg/xptr"
 )
 
 func TestRerank_Success(t *testing.T) {
@@ -23,7 +23,7 @@ func TestRerank_Success(t *testing.T) {
 		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 
 		// Verify request body
-		var req objects.RerankRequest
+		var req llm.RerankRequest
 		err := json.NewDecoder(r.Body).Decode(&req)
 		require.NoError(t, err)
 		assert.Equal(t, "test-model", req.Model)
@@ -31,8 +31,8 @@ func TestRerank_Success(t *testing.T) {
 		assert.Equal(t, []string{"doc1", "doc2"}, req.Documents)
 
 		// Return mock response
-		resp := objects.RerankResponse{
-			Results: []objects.RerankResult{
+		resp := llm.RerankResponse{
+			Results: []llm.RerankResult{
 				{Index: 0, RelevanceScore: 0.9, Document: "doc1"},
 				{Index: 1, RelevanceScore: 0.5, Document: "doc2"},
 			},
@@ -54,7 +54,7 @@ func TestRerank_Success(t *testing.T) {
 	require.True(t, ok, "transformer should implement Transformer interface")
 
 	// Execute rerank
-	req := &objects.RerankRequest{
+	req := &llm.RerankRequest{
 		Model:     "test-model",
 		Query:     "test query",
 		Documents: []string{"doc1", "doc2"},
@@ -80,7 +80,7 @@ func TestRerank_ValidationErrors(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		req     *objects.RerankRequest
+		req     *llm.RerankRequest
 		wantErr string
 	}{
 		{
@@ -90,37 +90,37 @@ func TestRerank_ValidationErrors(t *testing.T) {
 		},
 		{
 			name:    "empty model",
-			req:     &objects.RerankRequest{Query: "q", Documents: []string{"d"}},
+			req:     &llm.RerankRequest{Query: "q", Documents: []string{"d"}},
 			wantErr: "model is required",
 		},
 		{
 			name:    "empty query",
-			req:     &objects.RerankRequest{Model: "m", Documents: []string{"d"}},
+			req:     &llm.RerankRequest{Model: "m", Documents: []string{"d"}},
 			wantErr: "query is required",
 		},
 		{
 			name:    "empty documents",
-			req:     &objects.RerankRequest{Model: "m", Query: "q", Documents: []string{}},
+			req:     &llm.RerankRequest{Model: "m", Query: "q", Documents: []string{}},
 			wantErr: "documents are required",
 		},
 		{
 			name:    "top_n zero",
-			req:     &objects.RerankRequest{Model: "m", Query: "q", Documents: []string{"d"}, TopN: xptr.IntPtr(0)},
+			req:     &llm.RerankRequest{Model: "m", Query: "q", Documents: []string{"d"}, TopN: lo.ToPtr(0)},
 			wantErr: "top_n must be a positive integer",
 		},
 		{
 			name:    "top_n negative",
-			req:     &objects.RerankRequest{Model: "m", Query: "q", Documents: []string{"d"}, TopN: xptr.IntPtr(-1)},
+			req:     &llm.RerankRequest{Model: "m", Query: "q", Documents: []string{"d"}, TopN: lo.ToPtr(-1)},
 			wantErr: "top_n must be a positive integer",
 		},
 		{
 			name:    "top_n exceeds documents",
-			req:     &objects.RerankRequest{Model: "m", Query: "q", Documents: []string{"d1", "d2"}, TopN: xptr.IntPtr(5)},
+			req:     &llm.RerankRequest{Model: "m", Query: "q", Documents: []string{"d1", "d2"}, TopN: lo.ToPtr(5)},
 			wantErr: "top_n (5) cannot exceed the number of documents (2)",
 		},
 		{
 			name:    "empty document string",
-			req:     &objects.RerankRequest{Model: "m", Query: "q", Documents: []string{"d1", ""}},
+			req:     &llm.RerankRequest{Model: "m", Query: "q", Documents: []string{"d1", ""}},
 			wantErr: "document at index 1 is empty",
 		},
 	}
@@ -151,7 +151,7 @@ func TestRerank_HTTPError(t *testing.T) {
 	rerankTransformer, ok := outbound.(transformer.Transformer)
 	require.True(t, ok)
 
-	req := &objects.RerankRequest{
+	req := &llm.RerankRequest{
 		Model:     "invalid-model",
 		Query:     "test query",
 		Documents: []string{"doc1"},
@@ -183,7 +183,7 @@ func TestRerank_ServerError(t *testing.T) {
 	rerankTransformer, ok := outbound.(transformer.Transformer)
 	require.True(t, ok)
 
-	req := &objects.RerankRequest{
+	req := &llm.RerankRequest{
 		Model:     "test-model",
 		Query:     "test query",
 		Documents: []string{"doc1"},
@@ -199,15 +199,15 @@ func TestRerank_ServerError(t *testing.T) {
 
 func TestRerank_WithTopN(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var req objects.RerankRequest
+		var req llm.RerankRequest
 		json.NewDecoder(r.Body).Decode(&req)
 
 		// Verify top_n is passed
 		assert.NotNil(t, req.TopN)
 		assert.Equal(t, 2, *req.TopN)
 
-		resp := objects.RerankResponse{
-			Results: []objects.RerankResult{
+		resp := llm.RerankResponse{
+			Results: []llm.RerankResult{
 				{Index: 0, RelevanceScore: 0.9},
 				{Index: 1, RelevanceScore: 0.8},
 			},
@@ -226,11 +226,11 @@ func TestRerank_WithTopN(t *testing.T) {
 	rerankTransformer, ok := outbound.(transformer.Transformer)
 	require.True(t, ok)
 
-	req := &objects.RerankRequest{
+	req := &llm.RerankRequest{
 		Model:     "test-model",
 		Query:     "test query",
 		Documents: []string{"doc1", "doc2", "doc3"},
-		TopN:      xptr.IntPtr(2),
+		TopN:      lo.ToPtr(2),
 	}
 
 	resp, err := rerankTransformer.Rerank(context.Background(), req, nil)

@@ -27,3 +27,12 @@ func (t Type) IsOpenAI() bool {
 func (t Type) SupportsGoogleNativeTools() bool {
 	return t == TypeGemini || t == TypeGeminiVertex
 }
+
+// SupportsAnthropicNativeTools returns true if the channel type supports Anthropic native tools.
+// Anthropic native tools (web_search_20250305) are only supported by native Anthropic API
+// format channels (anthropic, anthropic_aws, anthropic_gcp).
+// Channels using Anthropic format but not native Anthropic API (e.g., deepseek_anthropic,
+// moonshot_anthropic) do NOT support these tools.
+func (t Type) SupportsAnthropicNativeTools() bool {
+	return t == TypeAnthropic || t == TypeAnthropicAWS || t == TypeAnthropicGcp
+}

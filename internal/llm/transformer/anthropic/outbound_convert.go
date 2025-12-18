@@ -9,12 +9,8 @@ import (
 	"github.com/looplj/axonhub/internal/pkg/xurl"
 )
 
-const (
-	// ToolTypeWebSearch20250305 is the native web search tool type for Anthropic (Beta).
-	ToolTypeWebSearch20250305 = "web_search_20250305"
-
-	anthropicWebSearchFunctionName = "web_search"
-)
+// ToolTypeWebSearch20250305 is an alias to llm.ToolTypeAnthropicWebSearch for package compatibility.
+const ToolTypeWebSearch20250305 = llm.ToolTypeAnthropicWebSearch
 
 // convertToAnthropicRequest converts ChatCompletionRequest to Anthropic MessageRequest.
 // Deprecated: Use convertToAnthropicRequestWithConfig instead.
@@ -90,10 +86,10 @@ func convertTools(tools []llm.Tool) []Tool {
 			continue
 		}
 
-		if tool.Function.Name == anthropicWebSearchFunctionName {
+		if tool.Function.Name == llm.AnthropicWebSearchFunctionName {
 			anthropicTools = append(anthropicTools, Tool{
 				Type: ToolTypeWebSearch20250305,
-				Name: anthropicWebSearchFunctionName,
+				Name: llm.AnthropicWebSearchFunctionName,
 			})
 
 			continue

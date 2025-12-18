@@ -742,6 +742,9 @@ func TestOutboundTransformer_ToolUse(t *testing.T) {
 					// but should not cause errors
 					require.NotNil(t, anthropicReq.Tools)
 					require.Len(t, anthropicReq.Tools, 1)
+
+					// Verify beta header is NOT set for regular function tools
+					require.Empty(t, result.Headers.Get("Anthropic-Beta"))
 				},
 			},
 		}

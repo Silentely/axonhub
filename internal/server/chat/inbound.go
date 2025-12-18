@@ -279,6 +279,11 @@ func selectChannels(inbound *PersistentInboundTransformer) pipeline.Middleware {
 			selector = NewGoogleNativeToolsSelector(selector)
 		}
 
+		// 应用 Anthropic 原生工具过滤（仅对 Anthropic 原生 API 格式生效）
+		if inbound.APIFormat() == llm.APIFormatAnthropicMessage {
+			selector = NewAnthropicNativeToolsSelector(selector)
+		}
+
 		if inbound.state.LoadBalancer != nil {
 			selector = NewLoadBalancedSelector(selector, inbound.state.LoadBalancer)
 		}

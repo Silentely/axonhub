@@ -652,6 +652,51 @@ func TestOutboundTransformer_ToolUse(t *testing.T) {
 				},
 			},
 			{
+				name: "request with web_search tool (native Anthropic)",
+				chatReq: &llm.Request{
+					Model:     "claude-3-sonnet-20240229",
+					MaxTokens: func() *int64 { v := int64(1024); return &v }(),
+					Messages: []llm.Message{
+						{
+							Role: "user",
+							Content: llm.MessageContent{
+								Content: func() *string { s := "Search the web for latest AI news"; return &s }(),
+							},
+						},
+					},
+					Tools: []llm.Tool{
+						{
+							Type: "function",
+							Function: llm.Function{
+								Name:        "web_search",
+								Description: "Search the web for information",
+								Parameters: json.RawMessage(
+									`{"type": "object", "properties": {"query": {"type": "string"}}}`,
+								),
+							},
+						},
+					},
+				},
+				expectError: false,
+				validate: func(t *testing.T, result *httpclient.Request) {
+					t.Helper()
+
+					var anthropicReq MessageRequest
+
+					err := json.Unmarshal(result.Body, &anthropicReq)
+					require.NoError(t, err)
+					require.NotNil(t, anthropicReq.Tools)
+					require.Len(t, anthropicReq.Tools, 1)
+					require.Equal(t, "web_search", anthropicReq.Tools[0].Name)
+					require.Equal(t, ToolTypeWebSearch20250305, anthropicReq.Tools[0].Type)
+					require.Empty(t, anthropicReq.Tools[0].Description)
+					require.Empty(t, anthropicReq.Tools[0].InputSchema)
+
+					// Verify beta header is set
+					require.Equal(t, "web-search-2025-03-05", result.Headers.Get("Anthropic-Beta"))
+				},
+			},
+			{
 				name: "request with tool choice",
 				chatReq: &llm.Request{
 					Model:     "claude-3-sonnet-20240229",

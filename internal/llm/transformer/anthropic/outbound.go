@@ -182,6 +182,11 @@ func (t *OutboundTransformer) TransformRequest(
 		headers.Set("Anthropic-Version", "2023-06-01")
 	}
 
+	// Add beta header for web search feature when tools are present
+	if len(anthropicReq.Tools) > 0 {
+		headers.Set("Anthropic-Beta", "web-search-2025-03-05")
+	}
+
 	// Prepare authentication
 	var auth *httpclient.AuthConfig
 

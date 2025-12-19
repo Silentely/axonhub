@@ -82,25 +82,20 @@ func convertTools(tools []llm.Tool) []Tool {
 	anthropicTools := make([]Tool, 0, len(tools))
 
 	for _, tool := range tools {
-		if tool.Type != llm.ToolType {
-			continue
-		}
-
-		if tool.Function.Name == llm.AnthropicWebSearchFunctionName {
+		// Use shared helper to detect Anthropic native tools (web_search)
+		if llm.IsAnthropicNativeTool(tool) {
 			anthropicTools = append(anthropicTools, Tool{
 				Type: ToolTypeWebSearch20250305,
 				Name: llm.AnthropicWebSearchFunctionName,
 			})
-
-			continue
+		} else if tool.Type == llm.ToolType {
+			anthropicTools = append(anthropicTools, Tool{
+				Name:         tool.Function.Name,
+				Description:  tool.Function.Description,
+				InputSchema:  tool.Function.Parameters,
+				CacheControl: convertToAnthropicCacheControl(tool.CacheControl),
+			})
 		}
-
-		anthropicTools = append(anthropicTools, Tool{
-			Name:         tool.Function.Name,
-			Description:  tool.Function.Description,
-			InputSchema:  tool.Function.Parameters,
-			CacheControl: convertToAnthropicCacheControl(tool.CacheControl),
-		})
 	}
 
 	if len(anthropicTools) == 0 {

@@ -156,6 +156,7 @@ type ComplexityRoot struct {
 		BaseURL                 func(childComplexity int) int
 		ChannelPerformance      func(childComplexity int) int
 		CreatedAt               func(childComplexity int) int
+		CustomModelsEndpoint    func(childComplexity int) int
 		DefaultTestModel        func(childComplexity int) int
 		DeletedAt               func(childComplexity int) int
 		ErrorMessage            func(childComplexity int) int
@@ -1600,6 +1601,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Channel.CreatedAt(childComplexity), true
+	case "Channel.customModelsEndpoint":
+		if e.complexity.Channel.CustomModelsEndpoint == nil {
+			break
+		}
+
+		return e.complexity.Channel.CustomModelsEndpoint(childComplexity), true
 	case "Channel.defaultTestModel":
 		if e.complexity.Channel.DefaultTestModel == nil {
 			break
@@ -9239,6 +9246,8 @@ func (ec *executionContext) fieldContext_ApplyChannelOverrideTemplatePayload_cha
 				return ec.fieldContext_Channel_errorMessage(ctx, field)
 			case "remark":
 				return ec.fieldContext_Channel_remark(ctx, field)
+			case "customModelsEndpoint":
+				return ec.fieldContext_Channel_customModelsEndpoint(ctx, field)
 			case "requests":
 				return ec.fieldContext_Channel_requests(ctx, field)
 			case "executions":
@@ -9484,6 +9493,8 @@ func (ec *executionContext) fieldContext_BulkImportChannelsResult_channels(_ con
 				return ec.fieldContext_Channel_errorMessage(ctx, field)
 			case "remark":
 				return ec.fieldContext_Channel_remark(ctx, field)
+			case "customModelsEndpoint":
+				return ec.fieldContext_Channel_customModelsEndpoint(ctx, field)
 			case "requests":
 				return ec.fieldContext_Channel_requests(ctx, field)
 			case "executions":
@@ -9613,6 +9624,8 @@ func (ec *executionContext) fieldContext_BulkUpdateChannelOrderingResult_channel
 				return ec.fieldContext_Channel_errorMessage(ctx, field)
 			case "remark":
 				return ec.fieldContext_Channel_remark(ctx, field)
+			case "customModelsEndpoint":
+				return ec.fieldContext_Channel_customModelsEndpoint(ctx, field)
 			case "requests":
 				return ec.fieldContext_Channel_requests(ctx, field)
 			case "executions":
@@ -10094,6 +10107,35 @@ func (ec *executionContext) _Channel_remark(ctx context.Context, field graphql.C
 }
 
 func (ec *executionContext) fieldContext_Channel_remark(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Channel",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Channel_customModelsEndpoint(ctx context.Context, field graphql.CollectedField, obj *ent.Channel) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Channel_customModelsEndpoint,
+		func(ctx context.Context) (any, error) {
+			return obj.CustomModelsEndpoint, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Channel_customModelsEndpoint(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Channel",
 		Field:      field,
@@ -10594,6 +10636,8 @@ func (ec *executionContext) fieldContext_ChannelEdge_node(_ context.Context, fie
 				return ec.fieldContext_Channel_errorMessage(ctx, field)
 			case "remark":
 				return ec.fieldContext_Channel_remark(ctx, field)
+			case "customModelsEndpoint":
+				return ec.fieldContext_Channel_customModelsEndpoint(ctx, field)
 			case "requests":
 				return ec.fieldContext_Channel_requests(ctx, field)
 			case "executions":
@@ -12054,6 +12098,8 @@ func (ec *executionContext) fieldContext_ChannelPerformance_channel(_ context.Co
 				return ec.fieldContext_Channel_errorMessage(ctx, field)
 			case "remark":
 				return ec.fieldContext_Channel_remark(ctx, field)
+			case "customModelsEndpoint":
+				return ec.fieldContext_Channel_customModelsEndpoint(ctx, field)
 			case "requests":
 				return ec.fieldContext_Channel_requests(ctx, field)
 			case "executions":
@@ -15130,6 +15176,8 @@ func (ec *executionContext) fieldContext_ModelChannelConnection_channel(_ contex
 				return ec.fieldContext_Channel_errorMessage(ctx, field)
 			case "remark":
 				return ec.fieldContext_Channel_remark(ctx, field)
+			case "customModelsEndpoint":
+				return ec.fieldContext_Channel_customModelsEndpoint(ctx, field)
 			case "requests":
 				return ec.fieldContext_Channel_requests(ctx, field)
 			case "executions":
@@ -15676,6 +15724,8 @@ func (ec *executionContext) fieldContext_Mutation_createChannel(ctx context.Cont
 				return ec.fieldContext_Channel_errorMessage(ctx, field)
 			case "remark":
 				return ec.fieldContext_Channel_remark(ctx, field)
+			case "customModelsEndpoint":
+				return ec.fieldContext_Channel_customModelsEndpoint(ctx, field)
 			case "requests":
 				return ec.fieldContext_Channel_requests(ctx, field)
 			case "executions":
@@ -15759,6 +15809,8 @@ func (ec *executionContext) fieldContext_Mutation_bulkCreateChannels(ctx context
 				return ec.fieldContext_Channel_errorMessage(ctx, field)
 			case "remark":
 				return ec.fieldContext_Channel_remark(ctx, field)
+			case "customModelsEndpoint":
+				return ec.fieldContext_Channel_customModelsEndpoint(ctx, field)
 			case "requests":
 				return ec.fieldContext_Channel_requests(ctx, field)
 			case "executions":
@@ -15842,6 +15894,8 @@ func (ec *executionContext) fieldContext_Mutation_updateChannel(ctx context.Cont
 				return ec.fieldContext_Channel_errorMessage(ctx, field)
 			case "remark":
 				return ec.fieldContext_Channel_remark(ctx, field)
+			case "customModelsEndpoint":
+				return ec.fieldContext_Channel_customModelsEndpoint(ctx, field)
 			case "requests":
 				return ec.fieldContext_Channel_requests(ctx, field)
 			case "executions":
@@ -15925,6 +15979,8 @@ func (ec *executionContext) fieldContext_Mutation_updateChannelStatus(ctx contex
 				return ec.fieldContext_Channel_errorMessage(ctx, field)
 			case "remark":
 				return ec.fieldContext_Channel_remark(ctx, field)
+			case "customModelsEndpoint":
+				return ec.fieldContext_Channel_customModelsEndpoint(ctx, field)
 			case "requests":
 				return ec.fieldContext_Channel_requests(ctx, field)
 			case "executions":
@@ -22685,6 +22741,8 @@ func (ec *executionContext) fieldContext_Request_channel(_ context.Context, fiel
 				return ec.fieldContext_Channel_errorMessage(ctx, field)
 			case "remark":
 				return ec.fieldContext_Channel_remark(ctx, field)
+			case "customModelsEndpoint":
+				return ec.fieldContext_Channel_customModelsEndpoint(ctx, field)
 			case "requests":
 				return ec.fieldContext_Channel_requests(ctx, field)
 			case "executions":
@@ -23596,6 +23654,8 @@ func (ec *executionContext) fieldContext_RequestExecution_channel(_ context.Cont
 				return ec.fieldContext_Channel_errorMessage(ctx, field)
 			case "remark":
 				return ec.fieldContext_Channel_remark(ctx, field)
+			case "customModelsEndpoint":
+				return ec.fieldContext_Channel_customModelsEndpoint(ctx, field)
 			case "requests":
 				return ec.fieldContext_Channel_requests(ctx, field)
 			case "executions":
@@ -29552,6 +29612,8 @@ func (ec *executionContext) fieldContext_UsageLog_channel(_ context.Context, fie
 				return ec.fieldContext_Channel_errorMessage(ctx, field)
 			case "remark":
 				return ec.fieldContext_Channel_remark(ctx, field)
+			case "customModelsEndpoint":
+				return ec.fieldContext_Channel_customModelsEndpoint(ctx, field)
 			case "requests":
 				return ec.fieldContext_Channel_requests(ctx, field)
 			case "executions":
@@ -36761,7 +36823,7 @@ func (ec *executionContext) unmarshalInputChannelWhereInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "deletedAt", "deletedAtNEQ", "deletedAtIn", "deletedAtNotIn", "deletedAtGT", "deletedAtGTE", "deletedAtLT", "deletedAtLTE", "type", "typeNEQ", "typeIn", "typeNotIn", "baseURL", "baseURLNEQ", "baseURLIn", "baseURLNotIn", "baseURLGT", "baseURLGTE", "baseURLLT", "baseURLLTE", "baseURLContains", "baseURLHasPrefix", "baseURLHasSuffix", "baseURLIsNil", "baseURLNotNil", "baseURLEqualFold", "baseURLContainsFold", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "status", "statusNEQ", "statusIn", "statusNotIn", "autoSyncSupportedModels", "autoSyncSupportedModelsNEQ", "defaultTestModel", "defaultTestModelNEQ", "defaultTestModelIn", "defaultTestModelNotIn", "defaultTestModelGT", "defaultTestModelGTE", "defaultTestModelLT", "defaultTestModelLTE", "defaultTestModelContains", "defaultTestModelHasPrefix", "defaultTestModelHasSuffix", "defaultTestModelEqualFold", "defaultTestModelContainsFold", "orderingWeight", "orderingWeightNEQ", "orderingWeightIn", "orderingWeightNotIn", "orderingWeightGT", "orderingWeightGTE", "orderingWeightLT", "orderingWeightLTE", "errorMessage", "errorMessageNEQ", "errorMessageIn", "errorMessageNotIn", "errorMessageGT", "errorMessageGTE", "errorMessageLT", "errorMessageLTE", "errorMessageContains", "errorMessageHasPrefix", "errorMessageHasSuffix", "errorMessageIsNil", "errorMessageNotNil", "errorMessageEqualFold", "errorMessageContainsFold", "remark", "remarkNEQ", "remarkIn", "remarkNotIn", "remarkGT", "remarkGTE", "remarkLT", "remarkLTE", "remarkContains", "remarkHasPrefix", "remarkHasSuffix", "remarkIsNil", "remarkNotNil", "remarkEqualFold", "remarkContainsFold", "hasRequests", "hasRequestsWith", "hasExecutions", "hasExecutionsWith", "hasUsageLogs", "hasUsageLogsWith", "hasChannelPerformance", "hasChannelPerformanceWith"}
+	fieldsInOrder := [...]string{"not", "and", "or", "id", "idNEQ", "idIn", "idNotIn", "idGT", "idGTE", "idLT", "idLTE", "createdAt", "createdAtNEQ", "createdAtIn", "createdAtNotIn", "createdAtGT", "createdAtGTE", "createdAtLT", "createdAtLTE", "updatedAt", "updatedAtNEQ", "updatedAtIn", "updatedAtNotIn", "updatedAtGT", "updatedAtGTE", "updatedAtLT", "updatedAtLTE", "deletedAt", "deletedAtNEQ", "deletedAtIn", "deletedAtNotIn", "deletedAtGT", "deletedAtGTE", "deletedAtLT", "deletedAtLTE", "type", "typeNEQ", "typeIn", "typeNotIn", "baseURL", "baseURLNEQ", "baseURLIn", "baseURLNotIn", "baseURLGT", "baseURLGTE", "baseURLLT", "baseURLLTE", "baseURLContains", "baseURLHasPrefix", "baseURLHasSuffix", "baseURLIsNil", "baseURLNotNil", "baseURLEqualFold", "baseURLContainsFold", "name", "nameNEQ", "nameIn", "nameNotIn", "nameGT", "nameGTE", "nameLT", "nameLTE", "nameContains", "nameHasPrefix", "nameHasSuffix", "nameEqualFold", "nameContainsFold", "status", "statusNEQ", "statusIn", "statusNotIn", "autoSyncSupportedModels", "autoSyncSupportedModelsNEQ", "defaultTestModel", "defaultTestModelNEQ", "defaultTestModelIn", "defaultTestModelNotIn", "defaultTestModelGT", "defaultTestModelGTE", "defaultTestModelLT", "defaultTestModelLTE", "defaultTestModelContains", "defaultTestModelHasPrefix", "defaultTestModelHasSuffix", "defaultTestModelEqualFold", "defaultTestModelContainsFold", "orderingWeight", "orderingWeightNEQ", "orderingWeightIn", "orderingWeightNotIn", "orderingWeightGT", "orderingWeightGTE", "orderingWeightLT", "orderingWeightLTE", "errorMessage", "errorMessageNEQ", "errorMessageIn", "errorMessageNotIn", "errorMessageGT", "errorMessageGTE", "errorMessageLT", "errorMessageLTE", "errorMessageContains", "errorMessageHasPrefix", "errorMessageHasSuffix", "errorMessageIsNil", "errorMessageNotNil", "errorMessageEqualFold", "errorMessageContainsFold", "remark", "remarkNEQ", "remarkIn", "remarkNotIn", "remarkGT", "remarkGTE", "remarkLT", "remarkLTE", "remarkContains", "remarkHasPrefix", "remarkHasSuffix", "remarkIsNil", "remarkNotNil", "remarkEqualFold", "remarkContainsFold", "customModelsEndpoint", "customModelsEndpointNEQ", "customModelsEndpointIn", "customModelsEndpointNotIn", "customModelsEndpointGT", "customModelsEndpointGTE", "customModelsEndpointLT", "customModelsEndpointLTE", "customModelsEndpointContains", "customModelsEndpointHasPrefix", "customModelsEndpointHasSuffix", "customModelsEndpointIsNil", "customModelsEndpointNotNil", "customModelsEndpointEqualFold", "customModelsEndpointContainsFold", "hasRequests", "hasRequestsWith", "hasExecutions", "hasExecutionsWith", "hasUsageLogs", "hasUsageLogsWith", "hasChannelPerformance", "hasChannelPerformanceWith"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -37668,6 +37730,111 @@ func (ec *executionContext) unmarshalInputChannelWhereInput(ctx context.Context,
 				return it, err
 			}
 			it.RemarkContainsFold = data
+		case "customModelsEndpoint":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customModelsEndpoint"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomModelsEndpoint = data
+		case "customModelsEndpointNEQ":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customModelsEndpointNEQ"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomModelsEndpointNEQ = data
+		case "customModelsEndpointIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customModelsEndpointIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomModelsEndpointIn = data
+		case "customModelsEndpointNotIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customModelsEndpointNotIn"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomModelsEndpointNotIn = data
+		case "customModelsEndpointGT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customModelsEndpointGT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomModelsEndpointGT = data
+		case "customModelsEndpointGTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customModelsEndpointGTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomModelsEndpointGTE = data
+		case "customModelsEndpointLT":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customModelsEndpointLT"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomModelsEndpointLT = data
+		case "customModelsEndpointLTE":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customModelsEndpointLTE"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomModelsEndpointLTE = data
+		case "customModelsEndpointContains":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customModelsEndpointContains"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomModelsEndpointContains = data
+		case "customModelsEndpointHasPrefix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customModelsEndpointHasPrefix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomModelsEndpointHasPrefix = data
+		case "customModelsEndpointHasSuffix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customModelsEndpointHasSuffix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomModelsEndpointHasSuffix = data
+		case "customModelsEndpointIsNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customModelsEndpointIsNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomModelsEndpointIsNil = data
+		case "customModelsEndpointNotNil":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customModelsEndpointNotNil"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomModelsEndpointNotNil = data
+		case "customModelsEndpointEqualFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customModelsEndpointEqualFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomModelsEndpointEqualFold = data
+		case "customModelsEndpointContainsFold":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customModelsEndpointContainsFold"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomModelsEndpointContainsFold = data
 		case "hasRequests":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasRequests"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -37897,7 +38064,7 @@ func (ec *executionContext) unmarshalInputCreateChannelInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"type", "baseURL", "name", "credentials", "supportedModels", "autoSyncSupportedModels", "tags", "defaultTestModel", "settings", "orderingWeight", "remark"}
+	fieldsInOrder := [...]string{"type", "baseURL", "name", "credentials", "supportedModels", "autoSyncSupportedModels", "tags", "defaultTestModel", "settings", "orderingWeight", "remark", "customModelsEndpoint"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -37981,6 +38148,13 @@ func (ec *executionContext) unmarshalInputCreateChannelInput(ctx context.Context
 				return it, err
 			}
 			it.Remark = data
+		case "customModelsEndpoint":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customModelsEndpoint"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomModelsEndpoint = data
 		}
 	}
 
@@ -39487,7 +39661,7 @@ func (ec *executionContext) unmarshalInputFetchModelsInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"channelType", "baseURL", "apiKey", "channelID"}
+	fieldsInOrder := [...]string{"channelType", "baseURL", "apiKey", "channelID", "customModelsEndpoint"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -39526,6 +39700,13 @@ func (ec *executionContext) unmarshalInputFetchModelsInput(ctx context.Context, 
 				return it, graphql.ErrorOnPath(ctx, err)
 			}
 			it.ChannelID = converted
+		case "customModelsEndpoint":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customModelsEndpoint"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomModelsEndpoint = data
 		}
 	}
 
@@ -46488,7 +46669,7 @@ func (ec *executionContext) unmarshalInputUpdateChannelInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"baseURL", "clearBaseURL", "name", "status", "credentials", "supportedModels", "appendSupportedModels", "autoSyncSupportedModels", "tags", "appendTags", "clearTags", "defaultTestModel", "settings", "clearSettings", "orderingWeight", "errorMessage", "clearErrorMessage", "remark", "clearRemark"}
+	fieldsInOrder := [...]string{"baseURL", "clearBaseURL", "name", "status", "credentials", "supportedModels", "appendSupportedModels", "autoSyncSupportedModels", "tags", "appendTags", "clearTags", "defaultTestModel", "settings", "clearSettings", "orderingWeight", "errorMessage", "clearErrorMessage", "remark", "clearRemark", "customModelsEndpoint", "clearCustomModelsEndpoint"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -46628,6 +46809,20 @@ func (ec *executionContext) unmarshalInputUpdateChannelInput(ctx context.Context
 				return it, err
 			}
 			it.ClearRemark = data
+		case "customModelsEndpoint":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customModelsEndpoint"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomModelsEndpoint = data
+		case "clearCustomModelsEndpoint":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearCustomModelsEndpoint"))
+			data, err := ec.unmarshalOBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearCustomModelsEndpoint = data
 		}
 	}
 
@@ -51693,6 +51888,8 @@ func (ec *executionContext) _Channel(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Channel_errorMessage(ctx, field, obj)
 		case "remark":
 			out.Values[i] = ec._Channel_remark(ctx, field, obj)
+		case "customModelsEndpoint":
+			out.Values[i] = ec._Channel_customModelsEndpoint(ctx, field, obj)
 		case "requests":
 			field := field
 

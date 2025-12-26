@@ -194,6 +194,7 @@ input FetchModelsInput {
   baseURL: String!
   apiKey: String
   channelID: ID
+  customModelsEndpoint: String
 }
 
 type FetchModelsPayload {

@@ -52,6 +52,8 @@ type Channel struct {
 	ErrorMessage *string `json:"error_message,omitempty"`
 	// User-defined remark or note for the channel
 	Remark *string `json:"remark,omitempty"`
+	// Custom endpoint for fetching models, used for proxies like Cloudflare AI Gateway
+	CustomModelsEndpoint *string `json:"custom_models_endpoint,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ChannelQuery when eager-loading is set.
 	Edges        ChannelEdges `json:"edges"`
@@ -128,7 +130,7 @@ func (*Channel) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case channel.FieldID, channel.FieldDeletedAt, channel.FieldOrderingWeight:
 			values[i] = new(sql.NullInt64)
-		case channel.FieldType, channel.FieldBaseURL, channel.FieldName, channel.FieldStatus, channel.FieldDefaultTestModel, channel.FieldErrorMessage, channel.FieldRemark:
+		case channel.FieldType, channel.FieldBaseURL, channel.FieldName, channel.FieldStatus, channel.FieldDefaultTestModel, channel.FieldErrorMessage, channel.FieldRemark, channel.FieldCustomModelsEndpoint:
 			values[i] = new(sql.NullString)
 		case channel.FieldCreatedAt, channel.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -259,6 +261,13 @@ func (_m *Channel) assignValues(columns []string, values []any) error {
 				_m.Remark = new(string)
 				*_m.Remark = value.String
 			}
+		case channel.FieldCustomModelsEndpoint:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field custom_models_endpoint", values[i])
+			} else if value.Valid {
+				_m.CustomModelsEndpoint = new(string)
+				*_m.CustomModelsEndpoint = value.String
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -363,6 +372,11 @@ func (_m *Channel) String() string {
 	builder.WriteString(", ")
 	if v := _m.Remark; v != nil {
 		builder.WriteString("remark=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.CustomModelsEndpoint; v != nil {
+		builder.WriteString("custom_models_endpoint=")
 		builder.WriteString(*v)
 	}
 	builder.WriteByte(')')

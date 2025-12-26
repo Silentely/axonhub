@@ -926,7 +926,7 @@ export function useFetchModels() {
   const { t } = useTranslation()
 
   return useMutation({
-    mutationFn: async (input: { channelType: string; baseURL: string; apiKey?: string; channelID?: string }) => {
+    mutationFn: async (input: { channelType: string; baseURL: string; apiKey?: string; channelID?: string; customModelsEndpoint?: string }) => {
       const data = await graphqlRequest<{
         fetchModels: {
           models: Array<{ id: string }>

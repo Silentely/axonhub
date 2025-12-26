@@ -105,6 +105,11 @@ func Remark(v string) predicate.Channel {
 	return predicate.Channel(sql.FieldEQ(FieldRemark, v))
 }
 
+// CustomModelsEndpoint applies equality check predicate on the "custom_models_endpoint" field. It's identical to CustomModelsEndpointEQ.
+func CustomModelsEndpoint(v string) predicate.Channel {
+	return predicate.Channel(sql.FieldEQ(FieldCustomModelsEndpoint, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Channel {
 	return predicate.Channel(sql.FieldEQ(FieldCreatedAt, v))
@@ -688,6 +693,81 @@ func RemarkEqualFold(v string) predicate.Channel {
 // RemarkContainsFold applies the ContainsFold predicate on the "remark" field.
 func RemarkContainsFold(v string) predicate.Channel {
 	return predicate.Channel(sql.FieldContainsFold(FieldRemark, v))
+}
+
+// CustomModelsEndpointEQ applies the EQ predicate on the "custom_models_endpoint" field.
+func CustomModelsEndpointEQ(v string) predicate.Channel {
+	return predicate.Channel(sql.FieldEQ(FieldCustomModelsEndpoint, v))
+}
+
+// CustomModelsEndpointNEQ applies the NEQ predicate on the "custom_models_endpoint" field.
+func CustomModelsEndpointNEQ(v string) predicate.Channel {
+	return predicate.Channel(sql.FieldNEQ(FieldCustomModelsEndpoint, v))
+}
+
+// CustomModelsEndpointIn applies the In predicate on the "custom_models_endpoint" field.
+func CustomModelsEndpointIn(vs ...string) predicate.Channel {
+	return predicate.Channel(sql.FieldIn(FieldCustomModelsEndpoint, vs...))
+}
+
+// CustomModelsEndpointNotIn applies the NotIn predicate on the "custom_models_endpoint" field.
+func CustomModelsEndpointNotIn(vs ...string) predicate.Channel {
+	return predicate.Channel(sql.FieldNotIn(FieldCustomModelsEndpoint, vs...))
+}
+
+// CustomModelsEndpointGT applies the GT predicate on the "custom_models_endpoint" field.
+func CustomModelsEndpointGT(v string) predicate.Channel {
+	return predicate.Channel(sql.FieldGT(FieldCustomModelsEndpoint, v))
+}
+
+// CustomModelsEndpointGTE applies the GTE predicate on the "custom_models_endpoint" field.
+func CustomModelsEndpointGTE(v string) predicate.Channel {
+	return predicate.Channel(sql.FieldGTE(FieldCustomModelsEndpoint, v))
+}
+
+// CustomModelsEndpointLT applies the LT predicate on the "custom_models_endpoint" field.
+func CustomModelsEndpointLT(v string) predicate.Channel {
+	return predicate.Channel(sql.FieldLT(FieldCustomModelsEndpoint, v))
+}
+
+// CustomModelsEndpointLTE applies the LTE predicate on the "custom_models_endpoint" field.
+func CustomModelsEndpointLTE(v string) predicate.Channel {
+	return predicate.Channel(sql.FieldLTE(FieldCustomModelsEndpoint, v))
+}
+
+// CustomModelsEndpointContains applies the Contains predicate on the "custom_models_endpoint" field.
+func CustomModelsEndpointContains(v string) predicate.Channel {
+	return predicate.Channel(sql.FieldContains(FieldCustomModelsEndpoint, v))
+}
+
+// CustomModelsEndpointHasPrefix applies the HasPrefix predicate on the "custom_models_endpoint" field.
+func CustomModelsEndpointHasPrefix(v string) predicate.Channel {
+	return predicate.Channel(sql.FieldHasPrefix(FieldCustomModelsEndpoint, v))
+}
+
+// CustomModelsEndpointHasSuffix applies the HasSuffix predicate on the "custom_models_endpoint" field.
+func CustomModelsEndpointHasSuffix(v string) predicate.Channel {
+	return predicate.Channel(sql.FieldHasSuffix(FieldCustomModelsEndpoint, v))
+}
+
+// CustomModelsEndpointIsNil applies the IsNil predicate on the "custom_models_endpoint" field.
+func CustomModelsEndpointIsNil() predicate.Channel {
+	return predicate.Channel(sql.FieldIsNull(FieldCustomModelsEndpoint))
+}
+
+// CustomModelsEndpointNotNil applies the NotNil predicate on the "custom_models_endpoint" field.
+func CustomModelsEndpointNotNil() predicate.Channel {
+	return predicate.Channel(sql.FieldNotNull(FieldCustomModelsEndpoint))
+}
+
+// CustomModelsEndpointEqualFold applies the EqualFold predicate on the "custom_models_endpoint" field.
+func CustomModelsEndpointEqualFold(v string) predicate.Channel {
+	return predicate.Channel(sql.FieldEqualFold(FieldCustomModelsEndpoint, v))
+}
+
+// CustomModelsEndpointContainsFold applies the ContainsFold predicate on the "custom_models_endpoint" field.
+func CustomModelsEndpointContainsFold(v string) predicate.Channel {
+	return predicate.Channel(sql.FieldContainsFold(FieldCustomModelsEndpoint, v))
 }
 
 // HasRequests applies the HasEdge predicate on the "requests" edge.

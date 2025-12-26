@@ -31,10 +31,11 @@ func NewModelFetcher(httpClient *httpclient.HttpClient, channelService *ChannelS
 
 // FetchModelsInput represents the input for fetching models.
 type FetchModelsInput struct {
-	ChannelType string
-	BaseURL     string
-	APIKey      *string
-	ChannelID   *int
+	ChannelType          string
+	BaseURL              string
+	APIKey               *string
+	ChannelID            *int
+	CustomModelsEndpoint *string
 }
 
 // FetchModelsResult represents the result of fetching models.
@@ -51,12 +52,14 @@ func (f *ModelFetcher) FetchModels(ctx context.Context, input FetchModelsInput) 
 			Models: []objects.ModelIdentify{},
 		}, nil
 	}
-	// Get API key from channel if not provided
+	// Prepare API key and custom models endpoint
 	apiKey := ""
+	customEndpoint := strings.TrimSpace(lo.FromPtr(input.CustomModelsEndpoint))
+
 	if input.APIKey != nil && *input.APIKey != "" {
 		apiKey = *input.APIKey
 	} else if input.ChannelID != nil {
-		// Query channel to get API key
+		// Query channel to get API key and custom endpoint
 		ctx = privacy.DecisionContext(ctx, privacy.Allow)
 
 		ch, err := f.channelService.entFromContext(ctx).Channel.Get(ctx, *input.ChannelID)
@@ -68,6 +71,10 @@ func (f *ModelFetcher) FetchModels(ctx context.Context, input FetchModelsInput) 
 		}
 
 		apiKey = ch.Credentials.APIKey
+
+		if customEndpoint == "" && ch.CustomModelsEndpoint != nil {
+			customEndpoint = strings.TrimSpace(lo.FromPtr(ch.CustomModelsEndpoint))
+		}
 	}
 
 	if apiKey == "" {
@@ -87,6 +94,10 @@ func (f *ModelFetcher) FetchModels(ctx context.Context, input FetchModelsInput) 
 	}
 
 	modelsURL, authHeaders := f.prepareModelsEndpoint(channelType, input.BaseURL)
+
+	if customEndpoint != "" {
+		modelsURL = strings.TrimSuffix(customEndpoint, "/")
+	}
 
 	req := &httpclient.Request{
 		Method:  http.MethodGet,

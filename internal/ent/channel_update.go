@@ -247,6 +247,26 @@ func (_u *ChannelUpdate) ClearRemark() *ChannelUpdate {
 	return _u
 }
 
+// SetCustomModelsEndpoint sets the "custom_models_endpoint" field.
+func (_u *ChannelUpdate) SetCustomModelsEndpoint(v string) *ChannelUpdate {
+	_u.mutation.SetCustomModelsEndpoint(v)
+	return _u
+}
+
+// SetNillableCustomModelsEndpoint sets the "custom_models_endpoint" field if the given value is not nil.
+func (_u *ChannelUpdate) SetNillableCustomModelsEndpoint(v *string) *ChannelUpdate {
+	if v != nil {
+		_u.SetCustomModelsEndpoint(*v)
+	}
+	return _u
+}
+
+// ClearCustomModelsEndpoint clears the value of the "custom_models_endpoint" field.
+func (_u *ChannelUpdate) ClearCustomModelsEndpoint() *ChannelUpdate {
+	_u.mutation.ClearCustomModelsEndpoint()
+	return _u
+}
+
 // AddRequestIDs adds the "requests" edge to the Request entity by IDs.
 func (_u *ChannelUpdate) AddRequestIDs(ids ...int) *ChannelUpdate {
 	_u.mutation.AddRequestIDs(ids...)
@@ -527,6 +547,12 @@ func (_u *ChannelUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.RemarkCleared() {
 		_spec.ClearField(channel.FieldRemark, field.TypeString)
+	}
+	if value, ok := _u.mutation.CustomModelsEndpoint(); ok {
+		_spec.SetField(channel.FieldCustomModelsEndpoint, field.TypeString, value)
+	}
+	if _u.mutation.CustomModelsEndpointCleared() {
+		_spec.ClearField(channel.FieldCustomModelsEndpoint, field.TypeString)
 	}
 	if _u.mutation.RequestsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -926,6 +952,26 @@ func (_u *ChannelUpdateOne) ClearRemark() *ChannelUpdateOne {
 	return _u
 }
 
+// SetCustomModelsEndpoint sets the "custom_models_endpoint" field.
+func (_u *ChannelUpdateOne) SetCustomModelsEndpoint(v string) *ChannelUpdateOne {
+	_u.mutation.SetCustomModelsEndpoint(v)
+	return _u
+}
+
+// SetNillableCustomModelsEndpoint sets the "custom_models_endpoint" field if the given value is not nil.
+func (_u *ChannelUpdateOne) SetNillableCustomModelsEndpoint(v *string) *ChannelUpdateOne {
+	if v != nil {
+		_u.SetCustomModelsEndpoint(*v)
+	}
+	return _u
+}
+
+// ClearCustomModelsEndpoint clears the value of the "custom_models_endpoint" field.
+func (_u *ChannelUpdateOne) ClearCustomModelsEndpoint() *ChannelUpdateOne {
+	_u.mutation.ClearCustomModelsEndpoint()
+	return _u
+}
+
 // AddRequestIDs adds the "requests" edge to the Request entity by IDs.
 func (_u *ChannelUpdateOne) AddRequestIDs(ids ...int) *ChannelUpdateOne {
 	_u.mutation.AddRequestIDs(ids...)
@@ -1236,6 +1282,12 @@ func (_u *ChannelUpdateOne) sqlSave(ctx context.Context) (_node *Channel, err er
 	}
 	if _u.mutation.RemarkCleared() {
 		_spec.ClearField(channel.FieldRemark, field.TypeString)
+	}
+	if value, ok := _u.mutation.CustomModelsEndpoint(); ok {
+		_spec.SetField(channel.FieldCustomModelsEndpoint, field.TypeString, value)
+	}
+	if _u.mutation.CustomModelsEndpointCleared() {
+		_spec.ClearField(channel.FieldCustomModelsEndpoint, field.TypeString)
 	}
 	if _u.mutation.RequestsCleared() {
 		edge := &sqlgraph.EdgeSpec{

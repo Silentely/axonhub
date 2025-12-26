@@ -635,6 +635,23 @@ type ChannelWhereInput struct {
 	RemarkEqualFold    *string  `json:"remarkEqualFold,omitempty"`
 	RemarkContainsFold *string  `json:"remarkContainsFold,omitempty"`
 
+	// "custom_models_endpoint" field predicates.
+	CustomModelsEndpoint             *string  `json:"customModelsEndpoint,omitempty"`
+	CustomModelsEndpointNEQ          *string  `json:"customModelsEndpointNEQ,omitempty"`
+	CustomModelsEndpointIn           []string `json:"customModelsEndpointIn,omitempty"`
+	CustomModelsEndpointNotIn        []string `json:"customModelsEndpointNotIn,omitempty"`
+	CustomModelsEndpointGT           *string  `json:"customModelsEndpointGT,omitempty"`
+	CustomModelsEndpointGTE          *string  `json:"customModelsEndpointGTE,omitempty"`
+	CustomModelsEndpointLT           *string  `json:"customModelsEndpointLT,omitempty"`
+	CustomModelsEndpointLTE          *string  `json:"customModelsEndpointLTE,omitempty"`
+	CustomModelsEndpointContains     *string  `json:"customModelsEndpointContains,omitempty"`
+	CustomModelsEndpointHasPrefix    *string  `json:"customModelsEndpointHasPrefix,omitempty"`
+	CustomModelsEndpointHasSuffix    *string  `json:"customModelsEndpointHasSuffix,omitempty"`
+	CustomModelsEndpointIsNil        bool     `json:"customModelsEndpointIsNil,omitempty"`
+	CustomModelsEndpointNotNil       bool     `json:"customModelsEndpointNotNil,omitempty"`
+	CustomModelsEndpointEqualFold    *string  `json:"customModelsEndpointEqualFold,omitempty"`
+	CustomModelsEndpointContainsFold *string  `json:"customModelsEndpointContainsFold,omitempty"`
+
 	// "requests" edge predicates.
 	HasRequests     *bool                `json:"hasRequests,omitempty"`
 	HasRequestsWith []*RequestWhereInput `json:"hasRequestsWith,omitempty"`
@@ -1085,6 +1102,51 @@ func (i *ChannelWhereInput) P() (predicate.Channel, error) {
 	}
 	if i.RemarkContainsFold != nil {
 		predicates = append(predicates, channel.RemarkContainsFold(*i.RemarkContainsFold))
+	}
+	if i.CustomModelsEndpoint != nil {
+		predicates = append(predicates, channel.CustomModelsEndpointEQ(*i.CustomModelsEndpoint))
+	}
+	if i.CustomModelsEndpointNEQ != nil {
+		predicates = append(predicates, channel.CustomModelsEndpointNEQ(*i.CustomModelsEndpointNEQ))
+	}
+	if len(i.CustomModelsEndpointIn) > 0 {
+		predicates = append(predicates, channel.CustomModelsEndpointIn(i.CustomModelsEndpointIn...))
+	}
+	if len(i.CustomModelsEndpointNotIn) > 0 {
+		predicates = append(predicates, channel.CustomModelsEndpointNotIn(i.CustomModelsEndpointNotIn...))
+	}
+	if i.CustomModelsEndpointGT != nil {
+		predicates = append(predicates, channel.CustomModelsEndpointGT(*i.CustomModelsEndpointGT))
+	}
+	if i.CustomModelsEndpointGTE != nil {
+		predicates = append(predicates, channel.CustomModelsEndpointGTE(*i.CustomModelsEndpointGTE))
+	}
+	if i.CustomModelsEndpointLT != nil {
+		predicates = append(predicates, channel.CustomModelsEndpointLT(*i.CustomModelsEndpointLT))
+	}
+	if i.CustomModelsEndpointLTE != nil {
+		predicates = append(predicates, channel.CustomModelsEndpointLTE(*i.CustomModelsEndpointLTE))
+	}
+	if i.CustomModelsEndpointContains != nil {
+		predicates = append(predicates, channel.CustomModelsEndpointContains(*i.CustomModelsEndpointContains))
+	}
+	if i.CustomModelsEndpointHasPrefix != nil {
+		predicates = append(predicates, channel.CustomModelsEndpointHasPrefix(*i.CustomModelsEndpointHasPrefix))
+	}
+	if i.CustomModelsEndpointHasSuffix != nil {
+		predicates = append(predicates, channel.CustomModelsEndpointHasSuffix(*i.CustomModelsEndpointHasSuffix))
+	}
+	if i.CustomModelsEndpointIsNil {
+		predicates = append(predicates, channel.CustomModelsEndpointIsNil())
+	}
+	if i.CustomModelsEndpointNotNil {
+		predicates = append(predicates, channel.CustomModelsEndpointNotNil())
+	}
+	if i.CustomModelsEndpointEqualFold != nil {
+		predicates = append(predicates, channel.CustomModelsEndpointEqualFold(*i.CustomModelsEndpointEqualFold))
+	}
+	if i.CustomModelsEndpointContainsFold != nil {
+		predicates = append(predicates, channel.CustomModelsEndpointContainsFold(*i.CustomModelsEndpointContainsFold))
 	}
 
 	if i.HasRequests != nil {

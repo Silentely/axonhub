@@ -195,6 +195,20 @@ func (_c *ChannelCreate) SetNillableRemark(v *string) *ChannelCreate {
 	return _c
 }
 
+// SetCustomModelsEndpoint sets the "custom_models_endpoint" field.
+func (_c *ChannelCreate) SetCustomModelsEndpoint(v string) *ChannelCreate {
+	_c.mutation.SetCustomModelsEndpoint(v)
+	return _c
+}
+
+// SetNillableCustomModelsEndpoint sets the "custom_models_endpoint" field if the given value is not nil.
+func (_c *ChannelCreate) SetNillableCustomModelsEndpoint(v *string) *ChannelCreate {
+	if v != nil {
+		_c.SetCustomModelsEndpoint(*v)
+	}
+	return _c
+}
+
 // AddRequestIDs adds the "requests" edge to the Request entity by IDs.
 func (_c *ChannelCreate) AddRequestIDs(ids ...int) *ChannelCreate {
 	_c.mutation.AddRequestIDs(ids...)
@@ -476,6 +490,10 @@ func (_c *ChannelCreate) createSpec() (*Channel, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Remark(); ok {
 		_spec.SetField(channel.FieldRemark, field.TypeString, value)
 		_node.Remark = &value
+	}
+	if value, ok := _c.mutation.CustomModelsEndpoint(); ok {
+		_spec.SetField(channel.FieldCustomModelsEndpoint, field.TypeString, value)
+		_node.CustomModelsEndpoint = &value
 	}
 	if nodes := _c.mutation.RequestsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -803,6 +821,24 @@ func (u *ChannelUpsert) ClearRemark() *ChannelUpsert {
 	return u
 }
 
+// SetCustomModelsEndpoint sets the "custom_models_endpoint" field.
+func (u *ChannelUpsert) SetCustomModelsEndpoint(v string) *ChannelUpsert {
+	u.Set(channel.FieldCustomModelsEndpoint, v)
+	return u
+}
+
+// UpdateCustomModelsEndpoint sets the "custom_models_endpoint" field to the value that was provided on create.
+func (u *ChannelUpsert) UpdateCustomModelsEndpoint() *ChannelUpsert {
+	u.SetExcluded(channel.FieldCustomModelsEndpoint)
+	return u
+}
+
+// ClearCustomModelsEndpoint clears the value of the "custom_models_endpoint" field.
+func (u *ChannelUpsert) ClearCustomModelsEndpoint() *ChannelUpsert {
+	u.SetNull(channel.FieldCustomModelsEndpoint)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create.
 // Using this option is equivalent to using:
 //
@@ -1093,6 +1129,27 @@ func (u *ChannelUpsertOne) UpdateRemark() *ChannelUpsertOne {
 func (u *ChannelUpsertOne) ClearRemark() *ChannelUpsertOne {
 	return u.Update(func(s *ChannelUpsert) {
 		s.ClearRemark()
+	})
+}
+
+// SetCustomModelsEndpoint sets the "custom_models_endpoint" field.
+func (u *ChannelUpsertOne) SetCustomModelsEndpoint(v string) *ChannelUpsertOne {
+	return u.Update(func(s *ChannelUpsert) {
+		s.SetCustomModelsEndpoint(v)
+	})
+}
+
+// UpdateCustomModelsEndpoint sets the "custom_models_endpoint" field to the value that was provided on create.
+func (u *ChannelUpsertOne) UpdateCustomModelsEndpoint() *ChannelUpsertOne {
+	return u.Update(func(s *ChannelUpsert) {
+		s.UpdateCustomModelsEndpoint()
+	})
+}
+
+// ClearCustomModelsEndpoint clears the value of the "custom_models_endpoint" field.
+func (u *ChannelUpsertOne) ClearCustomModelsEndpoint() *ChannelUpsertOne {
+	return u.Update(func(s *ChannelUpsert) {
+		s.ClearCustomModelsEndpoint()
 	})
 }
 
@@ -1552,6 +1609,27 @@ func (u *ChannelUpsertBulk) UpdateRemark() *ChannelUpsertBulk {
 func (u *ChannelUpsertBulk) ClearRemark() *ChannelUpsertBulk {
 	return u.Update(func(s *ChannelUpsert) {
 		s.ClearRemark()
+	})
+}
+
+// SetCustomModelsEndpoint sets the "custom_models_endpoint" field.
+func (u *ChannelUpsertBulk) SetCustomModelsEndpoint(v string) *ChannelUpsertBulk {
+	return u.Update(func(s *ChannelUpsert) {
+		s.SetCustomModelsEndpoint(v)
+	})
+}
+
+// UpdateCustomModelsEndpoint sets the "custom_models_endpoint" field to the value that was provided on create.
+func (u *ChannelUpsertBulk) UpdateCustomModelsEndpoint() *ChannelUpsertBulk {
+	return u.Update(func(s *ChannelUpsert) {
+		s.UpdateCustomModelsEndpoint()
+	})
+}
+
+// ClearCustomModelsEndpoint clears the value of the "custom_models_endpoint" field.
+func (u *ChannelUpsertBulk) ClearCustomModelsEndpoint() *ChannelUpsertBulk {
+	return u.Update(func(s *ChannelUpsert) {
+		s.ClearCustomModelsEndpoint()
 	})
 }
 

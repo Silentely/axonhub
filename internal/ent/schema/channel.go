@@ -99,6 +99,9 @@ func (Channel) Fields() []ent.Field {
 		field.String("remark").
 			Optional().Nillable().
 			Comment("User-defined remark or note for the channel"),
+		field.String("custom_models_endpoint").
+			Optional().Nillable().
+			Comment("Custom endpoint for fetching models, used for proxies like Cloudflare AI Gateway"),
 	}
 }
 

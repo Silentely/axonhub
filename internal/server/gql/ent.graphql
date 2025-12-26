@@ -257,6 +257,10 @@ type Channel implements Node {
   User-defined remark or note for the channel
   """
   remark: String
+  """
+  Custom endpoint for fetching models, used for proxies like Cloudflare AI Gateway
+  """
+  customModelsEndpoint: String
   requests(
     """
     Returns the elements in the list that come after the specified cursor.
@@ -1178,6 +1182,24 @@ input ChannelWhereInput {
   remarkEqualFold: String
   remarkContainsFold: String
   """
+  custom_models_endpoint field predicates
+  """
+  customModelsEndpoint: String
+  customModelsEndpointNEQ: String
+  customModelsEndpointIn: [String!]
+  customModelsEndpointNotIn: [String!]
+  customModelsEndpointGT: String
+  customModelsEndpointGTE: String
+  customModelsEndpointLT: String
+  customModelsEndpointLTE: String
+  customModelsEndpointContains: String
+  customModelsEndpointHasPrefix: String
+  customModelsEndpointHasSuffix: String
+  customModelsEndpointIsNil: Boolean
+  customModelsEndpointNotNil: Boolean
+  customModelsEndpointEqualFold: String
+  customModelsEndpointContainsFold: String
+  """
   requests edge predicates
   """
   hasRequests: Boolean
@@ -1228,6 +1250,10 @@ input CreateChannelInput {
   User-defined remark or note for the channel
   """
   remark: String
+  """
+  Custom endpoint for fetching models, used for proxies like Cloudflare AI Gateway
+  """
+  customModelsEndpoint: String
 }
 """
 CreateChannelOverrideTemplateInput is used for create ChannelOverrideTemplate object.
@@ -4342,6 +4368,11 @@ input UpdateChannelInput {
   """
   remark: String
   clearRemark: Boolean
+  """
+  Custom endpoint for fetching models, used for proxies like Cloudflare AI Gateway
+  """
+  customModelsEndpoint: String
+  clearCustomModelsEndpoint: Boolean
 }
 """
 UpdateChannelOverrideTemplateInput is used for update ChannelOverrideTemplate object.

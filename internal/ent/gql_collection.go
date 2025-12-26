@@ -656,6 +656,11 @@ func (_q *ChannelQuery) collectField(ctx context.Context, oneNode bool, opCtx *g
 				selectedFields = append(selectedFields, channel.FieldRemark)
 				fieldSeen[channel.FieldRemark] = struct{}{}
 			}
+		case "customModelsEndpoint":
+			if _, ok := fieldSeen[channel.FieldCustomModelsEndpoint]; !ok {
+				selectedFields = append(selectedFields, channel.FieldCustomModelsEndpoint)
+				fieldSeen[channel.FieldCustomModelsEndpoint] = struct{}{}
+			}
 		case "id":
 		case "__typename":
 		default:

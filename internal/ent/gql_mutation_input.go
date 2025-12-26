@@ -69,6 +69,7 @@ type CreateChannelInput struct {
 	Settings                *objects.ChannelSettings
 	OrderingWeight          *int
 	Remark                  *string
+	CustomModelsEndpoint    *string
 }
 
 // Mutate applies the CreateChannelInput on the ChannelMutation builder.
@@ -100,6 +101,9 @@ func (i *CreateChannelInput) Mutate(m *ChannelMutation) {
 	if v := i.Remark; v != nil {
 		m.SetRemark(*v)
 	}
+	if v := i.CustomModelsEndpoint; v != nil {
+		m.SetCustomModelsEndpoint(*v)
+	}
 }
 
 // SetInput applies the change-set in the CreateChannelInput on the ChannelCreate builder.
@@ -110,25 +114,27 @@ func (c *ChannelCreate) SetInput(i CreateChannelInput) *ChannelCreate {
 
 // UpdateChannelInput represents a mutation input for updating channels.
 type UpdateChannelInput struct {
-	ClearBaseURL            bool
-	BaseURL                 *string
-	Name                    *string
-	Status                  *channel.Status
-	Credentials             *objects.ChannelCredentials
-	SupportedModels         []string
-	AppendSupportedModels   []string
-	AutoSyncSupportedModels *bool
-	ClearTags               bool
-	Tags                    []string
-	AppendTags              []string
-	DefaultTestModel        *string
-	ClearSettings           bool
-	Settings                *objects.ChannelSettings
-	OrderingWeight          *int
-	ClearErrorMessage       bool
-	ErrorMessage            *string
-	ClearRemark             bool
-	Remark                  *string
+	ClearBaseURL              bool
+	BaseURL                   *string
+	Name                      *string
+	Status                    *channel.Status
+	Credentials               *objects.ChannelCredentials
+	SupportedModels           []string
+	AppendSupportedModels     []string
+	AutoSyncSupportedModels   *bool
+	ClearTags                 bool
+	Tags                      []string
+	AppendTags                []string
+	DefaultTestModel          *string
+	ClearSettings             bool
+	Settings                  *objects.ChannelSettings
+	OrderingWeight            *int
+	ClearErrorMessage         bool
+	ErrorMessage              *string
+	ClearRemark               bool
+	Remark                    *string
+	ClearCustomModelsEndpoint bool
+	CustomModelsEndpoint      *string
 }
 
 // Mutate applies the UpdateChannelInput on the ChannelMutation builder.
@@ -189,6 +195,12 @@ func (i *UpdateChannelInput) Mutate(m *ChannelMutation) {
 	}
 	if v := i.Remark; v != nil {
 		m.SetRemark(*v)
+	}
+	if i.ClearCustomModelsEndpoint {
+		m.ClearCustomModelsEndpoint()
+	}
+	if v := i.CustomModelsEndpoint; v != nil {
+		m.SetCustomModelsEndpoint(*v)
 	}
 }
 

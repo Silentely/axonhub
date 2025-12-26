@@ -172,7 +172,7 @@ func (_m *Channel) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     _m.ID,
 		Type:   "Channel",
-		Fields: make([]*Field, 16),
+		Fields: make([]*Field, 17),
 		Edges:  make([]*Edge, 4),
 	}
 	var buf []byte
@@ -302,6 +302,14 @@ func (_m *Channel) Node(ctx context.Context) (node *Node, err error) {
 	node.Fields[15] = &Field{
 		Type:  "string",
 		Name:  "remark",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(_m.CustomModelsEndpoint); err != nil {
+		return nil, err
+	}
+	node.Fields[16] = &Field{
+		Type:  "string",
+		Name:  "custom_models_endpoint",
 		Value: string(buf),
 	}
 	node.Edges[0] = &Edge{

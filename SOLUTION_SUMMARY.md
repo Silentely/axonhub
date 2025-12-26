@@ -15,7 +15,7 @@ Cloudflare AI Gateway 的 URL 结构为：
 https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/{provider}/...
 ```
 
-当用户配置的 Base URL 不包含完整的提供商路径时，系统自动添加的 `/v1/models` 会导致 URL 结构不正确。
+当用户配置的 Base URL 包含代理/网关路径时，系统自动添加的 `/v1/models` 可能会导致 URL 结构不正确，因为缺少了提供商特定的路径段。
 
 ## 解决方案
 

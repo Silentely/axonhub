@@ -1177,6 +1177,7 @@ type ChannelMutation struct {
 	addordering_weight         *int
 	error_message              *string
 	remark                     *string
+	custom_models_endpoint     *string
 	clearedFields              map[string]struct{}
 	requests                   map[int]struct{}
 	removedrequests            map[int]struct{}
@@ -2004,6 +2005,55 @@ func (m *ChannelMutation) ResetRemark() {
 	delete(m.clearedFields, channel.FieldRemark)
 }
 
+// SetCustomModelsEndpoint sets the "custom_models_endpoint" field.
+func (m *ChannelMutation) SetCustomModelsEndpoint(s string) {
+	m.custom_models_endpoint = &s
+}
+
+// CustomModelsEndpoint returns the value of the "custom_models_endpoint" field in the mutation.
+func (m *ChannelMutation) CustomModelsEndpoint() (r string, exists bool) {
+	v := m.custom_models_endpoint
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCustomModelsEndpoint returns the old "custom_models_endpoint" field's value of the Channel entity.
+// If the Channel object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChannelMutation) OldCustomModelsEndpoint(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCustomModelsEndpoint is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCustomModelsEndpoint requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCustomModelsEndpoint: %w", err)
+	}
+	return oldValue.CustomModelsEndpoint, nil
+}
+
+// ClearCustomModelsEndpoint clears the value of the "custom_models_endpoint" field.
+func (m *ChannelMutation) ClearCustomModelsEndpoint() {
+	m.custom_models_endpoint = nil
+	m.clearedFields[channel.FieldCustomModelsEndpoint] = struct{}{}
+}
+
+// CustomModelsEndpointCleared returns if the "custom_models_endpoint" field was cleared in this mutation.
+func (m *ChannelMutation) CustomModelsEndpointCleared() bool {
+	_, ok := m.clearedFields[channel.FieldCustomModelsEndpoint]
+	return ok
+}
+
+// ResetCustomModelsEndpoint resets all changes to the "custom_models_endpoint" field.
+func (m *ChannelMutation) ResetCustomModelsEndpoint() {
+	m.custom_models_endpoint = nil
+	delete(m.clearedFields, channel.FieldCustomModelsEndpoint)
+}
+
 // AddRequestIDs adds the "requests" edge to the Request entity by ids.
 func (m *ChannelMutation) AddRequestIDs(ids ...int) {
 	if m.requests == nil {
@@ -2239,7 +2289,7 @@ func (m *ChannelMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ChannelMutation) Fields() []string {
-	fields := make([]string, 0, 16)
+	fields := make([]string, 0, 17)
 	if m.created_at != nil {
 		fields = append(fields, channel.FieldCreatedAt)
 	}
@@ -2288,6 +2338,9 @@ func (m *ChannelMutation) Fields() []string {
 	if m.remark != nil {
 		fields = append(fields, channel.FieldRemark)
 	}
+	if m.custom_models_endpoint != nil {
+		fields = append(fields, channel.FieldCustomModelsEndpoint)
+	}
 	return fields
 }
 
@@ -2328,6 +2381,8 @@ func (m *ChannelMutation) Field(name string) (ent.Value, bool) {
 		return m.ErrorMessage()
 	case channel.FieldRemark:
 		return m.Remark()
+	case channel.FieldCustomModelsEndpoint:
+		return m.CustomModelsEndpoint()
 	}
 	return nil, false
 }
@@ -2369,6 +2424,8 @@ func (m *ChannelMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldErrorMessage(ctx)
 	case channel.FieldRemark:
 		return m.OldRemark(ctx)
+	case channel.FieldCustomModelsEndpoint:
+		return m.OldCustomModelsEndpoint(ctx)
 	}
 	return nil, fmt.Errorf("unknown Channel field %s", name)
 }
@@ -2490,6 +2547,13 @@ func (m *ChannelMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetRemark(v)
 		return nil
+	case channel.FieldCustomModelsEndpoint:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCustomModelsEndpoint(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Channel field %s", name)
 }
@@ -2562,6 +2626,9 @@ func (m *ChannelMutation) ClearedFields() []string {
 	if m.FieldCleared(channel.FieldRemark) {
 		fields = append(fields, channel.FieldRemark)
 	}
+	if m.FieldCleared(channel.FieldCustomModelsEndpoint) {
+		fields = append(fields, channel.FieldCustomModelsEndpoint)
+	}
 	return fields
 }
 
@@ -2590,6 +2657,9 @@ func (m *ChannelMutation) ClearField(name string) error {
 		return nil
 	case channel.FieldRemark:
 		m.ClearRemark()
+		return nil
+	case channel.FieldCustomModelsEndpoint:
+		m.ClearCustomModelsEndpoint()
 		return nil
 	}
 	return fmt.Errorf("unknown Channel nullable field %s", name)
@@ -2646,6 +2716,9 @@ func (m *ChannelMutation) ResetField(name string) error {
 		return nil
 	case channel.FieldRemark:
 		m.ResetRemark()
+		return nil
+	case channel.FieldCustomModelsEndpoint:
+		m.ResetCustomModelsEndpoint()
 		return nil
 	}
 	return fmt.Errorf("unknown Channel field %s", name)

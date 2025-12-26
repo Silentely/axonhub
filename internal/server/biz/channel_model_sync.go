@@ -67,9 +67,10 @@ func (svc *ChannelService) syncChannelModelsForChannel(ctx context.Context, ch *
 	modelFetcher := NewModelFetcher(httpClient, svc)
 
 	result, err := modelFetcher.FetchModels(ctx, FetchModelsInput{
-		ChannelType: ch.Type.String(),
-		BaseURL:     ch.BaseURL,
-		ChannelID:   lo.ToPtr(ch.ID),
+		ChannelType:          ch.Type.String(),
+		BaseURL:              ch.BaseURL,
+		ChannelID:            lo.ToPtr(ch.ID),
+		CustomModelsEndpoint: ch.CustomModelsEndpoint,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to fetch models: %w", err)

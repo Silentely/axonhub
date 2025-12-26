@@ -51,6 +51,8 @@ const (
 	FieldErrorMessage = "error_message"
 	// FieldRemark holds the string denoting the remark field in the database.
 	FieldRemark = "remark"
+	// FieldCustomModelsEndpoint holds the string denoting the custom_models_endpoint field in the database.
+	FieldCustomModelsEndpoint = "custom_models_endpoint"
 	// EdgeRequests holds the string denoting the requests edge name in mutations.
 	EdgeRequests = "requests"
 	// EdgeExecutions holds the string denoting the executions edge name in mutations.
@@ -110,6 +112,7 @@ var Columns = []string{
 	FieldOrderingWeight,
 	FieldErrorMessage,
 	FieldRemark,
+	FieldCustomModelsEndpoint,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -300,6 +303,11 @@ func ByErrorMessage(opts ...sql.OrderTermOption) OrderOption {
 // ByRemark orders the results by the remark field.
 func ByRemark(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldRemark, opts...).ToFunc()
+}
+
+// ByCustomModelsEndpoint orders the results by the custom_models_endpoint field.
+func ByCustomModelsEndpoint(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCustomModelsEndpoint, opts...).ToFunc()
 }
 
 // ByRequestsCount orders the results by requests count.

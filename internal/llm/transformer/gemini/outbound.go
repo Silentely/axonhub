@@ -180,9 +180,10 @@ func (t *OutboundTransformer) buildFullRequestURL(llmReq *llm.Request) string {
 	}
 
 	// For Vertex AI platform, use different URL format:
+	// Users should provide the full path including /v1 prefix in BaseURL.
 	// https://${API_ENDPOINT}/v1/publishers/google/models/${MODEL_ID}:${ACTION}?key=${API_KEY}
 	if t.config.PlatformType == PlatformVertex {
-		return fmt.Sprintf("%s/v1/publishers/google/models/%s:%s", t.config.BaseURL, llmReq.Model, action)
+		return fmt.Sprintf("%s/publishers/google/models/%s:%s", t.config.BaseURL, llmReq.Model, action)
 	}
 
 	// Format: /base_url/{version}/models/{model}:generateContent

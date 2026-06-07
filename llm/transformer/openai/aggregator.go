@@ -106,8 +106,10 @@ func (ca *choiceAggregator) addAnnotations(msg *Message) {
 type ChunkTransformFunc func(ctx context.Context, chunk *httpclient.StreamEvent) (*Response, error)
 
 func DefaultTransformChunk(ctx context.Context, chunk *httpclient.StreamEvent) (*Response, error) {
+	body := unwrapDataEnvelope(chunk.Data)
+
 	var response Response
-	if err := json.Unmarshal(chunk.Data, &response); err != nil {
+	if err := json.Unmarshal(body, &response); err != nil {
 		return nil, err
 	}
 

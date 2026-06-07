@@ -165,3 +165,6 @@ config.schema.json
 .factory
 .omo/
 .playwright-mcp/
+.ace-tool/
+.omc/
+.omx/

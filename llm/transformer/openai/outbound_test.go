@@ -524,6 +524,114 @@ func TestOutboundTransformer_TransformStreamChunk_StreamErrorEvent(t *testing.T)
 	assert.Equal(t, "2026031122524215033670187648af", respErr.Detail.RequestID)
 }
 
+func TestUnwrapDataEnvelope(t *testing.T) {
+	tests := []struct {
+		name     string
+		body     string
+		wantData bool // true if expect unwrapped inner data
+	}{
+		{
+			name:     "standard response without data wrapper",
+			body:     `{"id":"chatcmpl-1","choices":[{"message":{"content":"hi"}}]}`,
+			wantData: false,
+		},
+		{
+			name:     "data object wrapper",
+			body:     `{"data":{"id":"gen-1","choices":[{"message":{"content":"hi"}}]},"success":true}`,
+			wantData: true,
+		},
+		{
+			name:     "data is null",
+			body:     `{"data":null,"success":true}`,
+			wantData: false,
+		},
+		{
+			name:     "data is array (embedding format)",
+			body:     `{"data":[{"embedding":[0.1,0.2]}],"object":"list"}`,
+			wantData: false,
+		},
+		{
+			name:     "data is string",
+			body:     `{"data":"raw_value"}`,
+			wantData: false,
+		},
+		{
+			name:     "data coexists with choices (legitimate extension field)",
+			body:     `{"id":"chatcmpl-1","choices":[{"message":{"content":"hi"}}],"data":{"extra":"metadata"}}`,
+			wantData: false,
+		},
+		{
+			name:     "empty body",
+			body:     `{}`,
+			wantData: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := unwrapDataEnvelope([]byte(tt.body))
+
+			if tt.wantData {
+				// Result should be the inner object, not the original body
+				assert.NotEqual(t, tt.body, string(result), "should have unwrapped")
+				// Inner result should parse as a valid object with expected fields
+				var parsed map[string]any
+				assert.NoError(t, json.Unmarshal(result, &parsed))
+				assert.Contains(t, parsed, "id")
+			} else {
+				// Result should be identical to input
+				assert.Equal(t, tt.body, string(result), "should pass through unchanged")
+			}
+		})
+	}
+}
+
+func TestOutboundTransformer_TransformStreamChunk_WithDataEnvelope(t *testing.T) {
+	transformerInterface, err := NewOutboundTransformer("https://api.openai.com/v1", "test-key")
+	if err != nil {
+		t.Fatalf("Failed to create transformer: %v", err)
+	}
+
+	transformer := transformerInterface.(*OutboundTransformer)
+
+	// Stream chunk wrapped in data envelope
+	event := &httpclient.StreamEvent{
+		Data: []byte(`{"data":{"id":"gen-1","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}]},"success":true}`),
+	}
+
+	resp, err := transformer.TransformStreamChunk(context.Background(), event)
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+	assert.Len(t, resp.Choices, 1)
+	assert.NotNil(t, resp.Choices[0].Delta)
+	assert.Equal(t, "Hello", *resp.Choices[0].Delta.Content.Content)
+}
+
+func TestDefaultTransformChunk_WithDataEnvelope(t *testing.T) {
+	// Chunk wrapped in data envelope — should unwrap before parsing
+	chunk := &httpclient.StreamEvent{
+		Data: []byte(`{"data":{"id":"gen-1","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}]},"success":true}`),
+	}
+
+	resp, err := DefaultTransformChunk(context.Background(), chunk)
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+	assert.Len(t, resp.Choices, 1)
+	assert.NotNil(t, resp.Choices[0].Delta)
+	assert.Equal(t, "Hello", *resp.Choices[0].Delta.Content.Content)
+
+	// Standard chunk without wrapper — should pass through unchanged
+	stdChunk := &httpclient.StreamEvent{
+		Data: []byte(`{"id":"gen-2","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"World"},"finish_reason":null}]}`),
+	}
+
+	resp2, err := DefaultTransformChunk(context.Background(), stdChunk)
+	assert.NoError(t, err)
+	assert.NotNil(t, resp2)
+	assert.Len(t, resp2.Choices, 1)
+	assert.Equal(t, "World", *resp2.Choices[0].Delta.Content.Content)
+}
+
 func TestOutboundTransformer_TransformResponse(t *testing.T) {
 	transformerInterface, err := NewOutboundTransformer("https://api.openai.com/v1", "test-key")
 	if err != nil {
@@ -607,6 +715,46 @@ func TestOutboundTransformer_TransformResponse(t *testing.T) {
 			},
 			wantErr:     true,
 			errContains: "failed to unmarshal chat completion response",
+		},
+		{
+			name: "response wrapped in data envelope",
+			response: &httpclient.Response{
+				StatusCode: http.StatusOK,
+				Headers:    http.Header{"Content-Type": []string{"application/json"}},
+				Body: []byte(`{
+					"data": {
+						"id": "gen-123",
+						"object": "chat.completion",
+						"created": 1780836720,
+						"model": "xiaomi/mimo-v2.5",
+						"choices": [{
+							"index": 0,
+							"message": {
+								"role": "assistant",
+								"content": "Hello! I'm MiMo.",
+								"reasoning": "Let me think..."
+							},
+							"finish_reason": "stop"
+						}],
+						"usage": {
+							"prompt_tokens": 10,
+							"completion_tokens": 20,
+							"total_tokens": 30
+						}
+					},
+					"success": true
+				}`),
+			},
+			wantErr: false,
+			validate: func(resp *llm.Response) bool {
+				return resp.ID == "gen-123" &&
+					resp.Model == "xiaomi/mimo-v2.5" &&
+					len(resp.Choices) == 1 &&
+					resp.Choices[0].Message.Content.Content != nil &&
+					*resp.Choices[0].Message.Content.Content == "Hello! I'm MiMo." &&
+					resp.Choices[0].Message.Reasoning != nil &&
+					*resp.Choices[0].Message.Reasoning == "Let me think..."
+			},
 		},
 	}
 

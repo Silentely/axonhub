@@ -267,16 +267,42 @@ func (t *OutboundTransformer) TransformResponse(
 		}
 	}
 
-	// Parse into OpenAI Response type
+	// Parse into OpenAI Response type.
+	// Some providers wrap the actual response in a {"data": {...}, "success": true}
+	// envelope. Detect and unwrap the "data" field so the standard OpenAI response
+	// fields are parsed correctly.
+	body := unwrapDataEnvelope(httpResp.Body)
+
 	var oaiResp Response
 
-	err := json.Unmarshal(httpResp.Body, &oaiResp)
+	err := json.Unmarshal(body, &oaiResp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal chat completion response: %w", err)
 	}
 
 	// Convert to unified llm.Response
 	return oaiResp.ToLLMResponse(), nil
+}
+
+// unwrapDataEnvelope extracts the inner object from a {"data": {...}} wrapper.
+// Some providers (e.g. OpenRouter-compatible gateways) wrap the standard OpenAI
+// chat completion response inside a "data" field along with metadata like
+// "success". This helper detects such envelopes and returns the raw JSON of the
+// inner object so that downstream unmarshaling into openai.Response works as
+// expected. If the body is not wrapped, it is returned unchanged.
+func unwrapDataEnvelope(body []byte) []byte {
+	result := gjson.ParseBytes(body)
+	if data := result.Get("data"); data.Exists() && data.IsObject() {
+		// Only unwrap when the outer object does not already look like a valid
+		// OpenAI chat completion (i.e. it lacks the top-level "choices" field).
+		// This prevents accidentally stripping a legitimate "data" extension
+		// field from a provider that returns one alongside standard response keys.
+		if !result.Get("choices").Exists() {
+			return []byte(data.Raw)
+		}
+	}
+
+	return body
 }
 
 func (t *OutboundTransformer) TransformStream(ctx context.Context, req *httpclient.Request, stream streams.Stream[*httpclient.StreamEvent]) (streams.Stream[*llm.Response], error) {

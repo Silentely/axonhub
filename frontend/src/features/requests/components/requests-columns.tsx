@@ -150,6 +150,27 @@ export function useRequestsColumns(options?: UseRequestsColumnsOptions): ColumnD
         );
       },
     },
+
+    {
+      id: 'passThrough',
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t('requests.columns.passThrough')} />,
+      enableSorting: false,
+      enableHiding: true,
+      cell: ({ row }) => {
+        const executions = row.original.executions?.edges?.map((edge) => edge.node).filter(Boolean) || [];
+        const appliedExecution = executions.find((execution) => execution?.passThroughApplied);
+
+        if (!appliedExecution) {
+          return <div className='text-muted-foreground text-xs'>-</div>;
+        }
+
+        return (
+          <Badge className='border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300'>
+            {t('requests.passThrough.applied')}
+          </Badge>
+        );
+      },
+    },
     {
       accessorKey: 'reasoningEffort',
       header: ({ column }) => <DataTableColumnHeader column={column} title={t('requests.columns.reasoningEffort')} />,
@@ -464,12 +485,15 @@ export function useRequestsColumns(options?: UseRequestsColumnsOptions): ColumnD
           return <div className='text-muted-foreground text-xs'>-</div>;
         }
 
+        const hitRate = promptTokens > 0 ? (cachedTokens / promptTokens) * 100 : 0;
+        const isLowHitRate = hitRate < 80 && promptTokens >= 40000;
+
         return (
           <div className='text-xs'>
             <div className='text-sm font-medium'>{cachedTokens.toLocaleString()}</div>
-            <div className='text-muted-foreground'>
+            <div className={isLowHitRate ? 'text-red-600 font-medium dark:text-red-400' : 'text-muted-foreground'}>
               {t('requests.columns.cacheHitRate', {
-                rate: promptTokens > 0 ? ((cachedTokens / promptTokens) * 100).toFixed(1) : '0.0',
+                rate: hitRate.toFixed(1),
               })}
             </div>
           </div>

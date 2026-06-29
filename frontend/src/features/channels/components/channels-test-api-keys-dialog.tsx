@@ -292,8 +292,8 @@ export function ChannelsTestAPIKeysDialog({ open, onOpenChange }: ChannelsTestAP
             </div>
           )}
 
-          <div className='min-h-0 flex-1 overflow-hidden rounded-lg border'>
-            <ScrollArea className='h-[420px]'>
+          <div className='flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border'>
+            <ScrollArea className='min-h-0 flex-1'>
               <Table>
                 <TableHeader>
                   <TableRow>

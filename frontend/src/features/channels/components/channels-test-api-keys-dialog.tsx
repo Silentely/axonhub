@@ -268,7 +268,7 @@ export function ChannelsTestAPIKeysDialog({ open, onOpenChange }: ChannelsTestAP
           <DialogDescription>{t('channels.dialogs.testAPIKeys.description', { name: currentRow.name })}</DialogDescription>
         </DialogHeader>
 
-        <div className='min-h-0 flex-1 space-y-4'>
+        <div className='flex min-h-0 flex-1 flex-col gap-4'>
           {allKeys.length > 0 && (
             <div className='flex items-center justify-between gap-4 rounded-md border bg-muted/40 px-4 py-3'>
               <div className='text-sm font-medium'>

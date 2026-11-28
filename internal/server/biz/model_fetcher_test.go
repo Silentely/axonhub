@@ -792,6 +792,7 @@ func TestFetchModelsWithSavedOpenAIRealtimeEndpoint(t *testing.T) {
 		{"implicit default", "", "https://api.openai.com", false},
 		{"different host", "wss://realtime.example.test", "https://other.example.test", false},
 		{"different port", "wss://realtime.example.test:8443", "https://realtime.example.test", false},
+		{"international hostname", "wss://例子.com/v1", "https://xn--fsqu00a.com", true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			ch, err := db.Channel.Create().
@@ -851,6 +852,13 @@ func TestFetchModelsInputMatchesSavedOpenAIRealtime(t *testing.T) {
 		require.False(t, fetchModelsInputMatchesOpenAIRealtime(changed, ch), address)
 	}
 	cfg.Enabled = false
+	require.False(t, fetchModelsInputMatchesOpenAIRealtime(input, ch))
+	cfg.Enabled = true
+	cfg.Path = "/invalid"
+	require.False(t, fetchModelsInputMatchesOpenAIRealtime(input, ch))
+	cfg.Path = "/v1/realtime"
+	ch.Type = channel.TypeBailian
+	input.ChannelType = ch.Type.String()
 	require.False(t, fetchModelsInputMatchesOpenAIRealtime(input, ch))
 }
 

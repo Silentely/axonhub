@@ -25,6 +25,10 @@ test('Realtime Base URL is editable, defaults by provider, and accepts only secu
 });
 
 test('Realtime accepts only its provider version prefix and fetches models from the host', () => {
+  assert.equal(getModelFetchBaseURL('openai/realtime-ws', '', 'wss://例子.com/v1'), 'https://xn--fsqu00a.com');
+  for (const host of ['<host>', 'ho"st', 'foo_bar.example', '-bad.example', 'bad..example']) {
+    assert.throws(() => realtimeForSelection('openai/realtime-ws', undefined, 'wss://' + host, ''));
+  }
   for (const [format, host, prefix] of [
     ['openai/realtime-ws', 'wss://api.openai.com', '/v1'],
     ['qwen/realtime-ws', 'wss://workspace.cn-beijing.maas.aliyuncs.com', '/api-ws/v1'],

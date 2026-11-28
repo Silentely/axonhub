@@ -7,6 +7,7 @@ package realtime
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"regexp"
 
@@ -28,7 +29,7 @@ func parseEndpoint(baseURL, path string) (*url.URL, error) {
 		return trustedHost.MatchString(u.Host)
 	})
 	if err != nil {
-		return nil, errors.New("Qwen realtime requires a trusted Workspace regional WSS host with an optional /api-ws/v1 path")
+		return nil, fmt.Errorf("Qwen Realtime Workspace Base URL (optional /api-ws/v1): %w", err)
 	}
 	if path != qwenRealtimePath {
 		return nil, errors.New("Qwen realtime requires /api-ws/v1/realtime")

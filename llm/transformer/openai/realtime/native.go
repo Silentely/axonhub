@@ -13,9 +13,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"net"
+	"fmt"
 	"net/url"
-	"regexp"
 	"strings"
 
 	"github.com/looplj/axonhub/llm"
@@ -56,24 +55,34 @@ func ValidateEndpoint(baseURL, path string) error {
 	return err
 }
 
-// 浏览器会把以数字结尾的主机按 IPv4 规则解析。
-var numericHostSuffix = regexp.MustCompile(`(?i)(^|\.)([0-9]+|0x[0-9a-f]*)\.?$`)
+const DefaultBaseURL = "wss://api.openai.com"
 
 func parseEndpoint(baseURL, path string) (*url.URL, error) {
 	if baseURL == "" {
-		baseURL = "wss://api.openai.com"
+		baseURL = DefaultBaseURL
 	}
-	u, err := xurl.ParseRealtimeBaseURL(baseURL, "/v1", func(u *url.URL) bool {
-		return net.ParseIP(u.Hostname()) == nil && !strings.Contains(u.Hostname(), ":") && !numericHostSuffix.MatchString(u.Hostname())
-	})
+	u, err := xurl.ParseRealtimeBaseURL(baseURL, "/v1", func(*url.URL) bool { return true })
 	if err != nil {
-		return nil, errors.New("OpenAI Realtime requires a wss:// host with an optional /v1 path and no query or fragment")
+		return nil, fmt.Errorf("OpenAI Realtime Base URL (optional /v1): %w", err)
 	}
 	if path != "" && path != "/v1/realtime" {
 		return nil, errors.New("OpenAI Realtime path must be /v1/realtime")
 	}
 	return u, nil
 }
+
+// ModelsBaseURL 返回显式配置的模型列表 HTTPS 地址，空配置不授权复用密钥。
+func ModelsBaseURL(baseURL, path string) (string, error) {
+	if baseURL == "" {
+		return "", errors.New("OpenAI Realtime Base URL is required")
+	}
+	base, err := parseEndpoint(baseURL, path)
+	if err != nil {
+		return "", err
+	}
+	return "https://" + base.Host, nil
+}
+
 func EndpointURL(baseURL, path, model string) (string, error) {
 	base, err := parseEndpoint(baseURL, path)
 	if err != nil {

@@ -40,7 +40,8 @@ function parseRealtimeBaseURL(format: RealtimeFormat, baseURL: string): URL | nu
 
   try {
     const url = new URL(baseURL);
-    if (!url.hostname || url.hostname.includes(':') || /^\d+(?:\.\d+){3}$/.test(url.hostname)) return null;
+    if (!url.hostname.replace(/\.$/, '').split('.').every((label) => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label))) return null;
+    if (/^\d+(?:\.\d+){3}$/.test(url.hostname)) return null;
     if (match[1].endsWith(':') || url.port === '0') return null;
     if (format === 'qwen/realtime-ws' && !qwenRealtimeHostPattern.test(match[1])) return null;
     return url;

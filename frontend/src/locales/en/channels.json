@@ -1,6 +1,5 @@
 {
-  "channels.realtime.host": "Realtime API Host (WSS)",
-  "channels.realtime.invalidHost": "Enter a wss:// host with no query or fragment. You may append /v1 for OpenAI or /api-ws/v1 for Qwen. Replace <workspace-id> with your actual Workspace ID for Qwen.",
+  "channels.realtime.invalidHost": "Enter a valid wss:// host without a query, fragment, or full /realtime path. You may append /v1 for OpenAI or /api-ws/v1 for Qwen. Replace <workspace-id> with your actual Workspace ID for Qwen.",
   "channels.realtime.endpointsInactive": "This channel serves Realtime only. Its ordinary endpoints will become available again when you select an ordinary protocol in the channel settings.",
   "channels.realtime.legacyEndpoint": "This channel contains a legacy Realtime endpoint. Realtime must be configured in the channel form. Reload after the server migration; endpoint management cannot save this configuration.",
   "channels.endpoints.realtime.handshakeTimeout": "Handshake timeout",

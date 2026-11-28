@@ -70,7 +70,7 @@ func (ch *Channel) RealtimeEndpoint() *objects.ChannelEndpoint {
 	host, path := cfg.BaseURL, cfg.Path
 	if cfg.Protocol == llm.APIFormatOpenAIRealtimeWebSocket.String() {
 		if host == "" {
-			host = "wss://api.openai.com"
+			host = openairt.DefaultBaseURL
 		}
 		if path == "" {
 			path = "/v1/realtime"

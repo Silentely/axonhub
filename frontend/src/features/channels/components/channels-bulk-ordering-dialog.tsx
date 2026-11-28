@@ -159,10 +159,14 @@ const ChannelOrderingItemComponent = memo(function ChannelOrderingItemComponent(
           </div>
         </div>
 
-        <div className='hidden flex-1 items-center gap-2 sm:flex'>
-          <div className='bg-border h-3 w-[1px]' />
-          <span className='text-muted-foreground truncate font-mono text-[10px] opacity-70'>{baseURL}</span>
-        </div>
+        {baseURL && (
+          <div className='hidden min-w-0 flex-1 items-center gap-2 sm:flex'>
+            <div className='bg-border h-3 w-[1px] shrink-0' />
+            <span className='text-muted-foreground truncate font-mono text-[10px] opacity-70' title={baseURL}>
+              {baseURL}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Controls */}

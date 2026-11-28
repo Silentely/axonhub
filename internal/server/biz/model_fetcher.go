@@ -24,6 +24,7 @@ import (
 	"github.com/looplj/axonhub/llm/transformer/gemini/vertex"
 	"github.com/looplj/axonhub/llm/transformer/openai/codex"
 	"github.com/looplj/axonhub/llm/transformer/openai/copilot"
+	openairt "github.com/looplj/axonhub/llm/transformer/openai/realtime"
 	"github.com/looplj/axonhub/llm/transformer/xai/subscription"
 )
 
@@ -387,15 +388,8 @@ func fetchModelsInputMatchesOpenAIRealtime(input FetchModelsInput, ch *ent.Chann
 	if cfg == nil || !cfg.Enabled || cfg.BaseURL == "" || ValidateChannelRealtime(ch.Type, cfg) != nil {
 		return false
 	}
-	u, err := url.Parse(cfg.BaseURL)
-	if err != nil {
-		return false
-	}
-	host := strings.ToLower(u.Hostname())
-	if port := strings.TrimLeft(u.Port(), "0"); port != "" && port != "443" {
-		host += ":" + port
-	}
-	return input.BaseURL == "https://"+host
+	base, err := openairt.ModelsBaseURL(cfg.BaseURL, cfg.Path)
+	return err == nil && input.BaseURL == base
 }
 
 type modelFetchMode int

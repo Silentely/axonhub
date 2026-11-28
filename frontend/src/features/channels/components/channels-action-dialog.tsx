@@ -810,7 +810,7 @@ export function ChannelsActionDialog({
     }
     return OPENAI_CHAT_COMPLETIONS;
   });
-  const [realtimeHost, setRealtimeHost] = useState(initialRow?.settings?.realtime?.baseURL ?? '');
+  const [realtimeHost, setRealtimeHost] = useState(initialRow?.settings?.realtime?.baseURL || undefined);
   const [realtimeTimeout, setRealtimeTimeout] = useState(getRealtimeHandshakeTimeoutInputValue(initialRow?.settings?.realtime?.handshakeTimeoutMs));
   const [realtimeClientEventsPerSecond, setRealtimeClientEventsPerSecond] = useState(getRealtimeClientEventsPerSecondInputValue(initialRow?.settings?.realtime?.clientEventsPerSecond));
   const [responsesTransport, setResponsesTransport] = useState<ResponsesTransport>(() => getResponsesTransportFromChannel(initialRow));
@@ -849,7 +849,7 @@ export function ChannelsActionDialog({
     );
     setSelectedApiFormat(apiFormat);
     setResponsesTransport(getResponsesTransportFromChannel(initialRow));
-    setRealtimeHost(initialRow.settings?.realtime?.baseURL ?? '');
+    setRealtimeHost(initialRow.settings?.realtime?.baseURL || undefined);
     setRealtimeTimeout(getRealtimeHandshakeTimeoutInputValue(initialRow.settings?.realtime?.handshakeTimeoutMs));
     setRealtimeClientEventsPerSecond(getRealtimeClientEventsPerSecondInputValue(initialRow.settings?.realtime?.clientEventsPerSecond));
     setCodexResponsesWebSocket(getCodexResponsesWebSocketState(initialRow).enabled);
@@ -1289,7 +1289,7 @@ export function ChannelsActionDialog({
       if (isOAuthChannel) return;
       if (isEdit && alwaysOAuthProviderKeys.includes(provider)) return;
       setSelectedProvider(provider);
-      setRealtimeHost('');
+      setRealtimeHost(undefined);
       setRealtimeTimeout(getRealtimeHandshakeTimeoutInputValue(undefined));
       setRealtimeClientEventsPerSecond(getRealtimeClientEventsPerSecondInputValue(undefined));
       setAuthMode(isEdit && ['codex', 'claudecode'].includes(provider) ? 'third-party' : 'official');
@@ -2414,7 +2414,7 @@ export function ChannelsActionDialog({
     setProxyUrl(initialRow?.settings?.proxy?.url || '');
     setProxyUsername(initialRow?.settings?.proxy?.username || '');
     setProxyPassword(initialRow?.settings?.proxy?.password || '');
-    setRealtimeHost(initialRow?.settings?.realtime?.baseURL ?? '');
+    setRealtimeHost(initialRow?.settings?.realtime?.baseURL || undefined);
     setRealtimeTimeout(getRealtimeHandshakeTimeoutInputValue(initialRow?.settings?.realtime?.handshakeTimeoutMs));
     setRealtimeClientEventsPerSecond(getRealtimeClientEventsPerSecondInputValue(initialRow?.settings?.realtime?.clientEventsPerSecond));
     setPassThroughUserAgent(initialRow?.settings?.passThroughUserAgent ?? null);
@@ -3015,9 +3015,7 @@ export function ChannelsActionDialog({
                                       ? getChannelBaseURLInputValue(selectedApiFormat, field.value, realtimeHost)
                                       : field.value ?? ''}
                                     onChange={isRealtimeProtocol(selectedApiFormat) ? (event) => setRealtimeHost(event.target.value) : field.onChange}
-                                    placeholder={isRealtimeProtocol(selectedApiFormat)
-                                      ? selectedApiFormat === 'qwen/realtime-ws' ? t('channels.realtime.qwenHostPlaceholder') : ''
-                                      : baseURLPlaceholder}
+                                    placeholder={isRealtimeProtocol(selectedApiFormat) ? '' : baseURLPlaceholder}
                                     autoComplete='off'
                                     data-form-type='other'
                                     aria-invalid={!isRealtimeProtocol(selectedApiFormat) && !!fieldState.error}

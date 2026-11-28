@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/looplj/axonhub/internal/authz"
+	"github.com/looplj/axonhub/internal/ent"
 	"github.com/looplj/axonhub/internal/ent/channel"
 	"github.com/looplj/axonhub/internal/ent/enttest"
 	"github.com/looplj/axonhub/internal/objects"
@@ -774,6 +775,25 @@ func TestFetchModelsWithChannelIDUsesStoredCredentialsOnlyForStoredEndpoint(t *t
 	if len(result.Models) != 1 || result.Models[0].ID != "stored-model" {
 		t.Fatalf("unexpected models: %#v", result.Models)
 	}
+}
+
+func TestFetchModelsInputMatchesSavedOpenAIRealtime(t *testing.T) {
+	cfg := &objects.ChannelRealtimeConfig{
+		Enabled: true, Protocol: "openai/realtime-ws", BaseURL: "wss://Proxy.Example.test:443/v1/", Path: "/v1/realtime",
+	}
+	ch := &ent.Channel{
+		Type: channel.TypeOpenai, BaseURL: "https://api.openai.com/v1",
+		Settings: &objects.ChannelSettings{Realtime: cfg},
+	}
+	input := FetchModelsInput{ChannelType: "openai", BaseURL: "https://proxy.example.test"}
+	require.True(t, fetchModelsInputMatchesOpenAIRealtime(input, ch))
+	for _, address := range []string{"http://proxy.example.test", "https://other.example.test", "https://proxy.example.test:8443", "https://proxy.example.test/custom"} {
+		changed := input
+		changed.BaseURL = address
+		require.False(t, fetchModelsInputMatchesOpenAIRealtime(changed, ch), address)
+	}
+	cfg.Enabled = false
+	require.False(t, fetchModelsInputMatchesOpenAIRealtime(input, ch))
 }
 
 func TestFetchModelsClineWithChannelIDUsesStoredProxyWithoutCredentials(t *testing.T) {

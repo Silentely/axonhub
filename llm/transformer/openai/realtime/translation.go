@@ -11,11 +11,11 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
-	"net/url"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/looplj/axonhub/llm/internal/pkg/xurl"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 )
@@ -26,16 +26,14 @@ const (
 )
 
 func TranslationEndpointURL(baseURL, path, model string) (string, error) {
-	if err := ValidateEndpoint(baseURL, path); err != nil {
+	base, err := parseEndpoint(baseURL, path)
+	if err != nil {
 		return "", err
 	}
 	if model != TranslationModel {
 		return "", errors.New("unsupported OpenAI Realtime Translation model")
 	}
-	if baseURL == "" {
-		baseURL = "wss://api.openai.com"
-	}
-	return strings.TrimSuffix(baseURL, "/") + "/v1/realtime/translations?" + url.Values{"model": []string{model}}.Encode(), nil
+	return xurl.RealtimeModelURL(base, "/v1/realtime/translations", model), nil
 }
 
 // Translation serializes state through the owning conversation.

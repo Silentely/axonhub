@@ -1029,6 +1029,13 @@ const ALL_CHANNEL_SUMMARYS_QUERY = `
       baseURL
       orderingWeight
       tags
+      settings {
+        realtime {
+          enabled
+          protocol
+          baseURL
+        }
+      }
       endpoints {
         apiFormat
         path
@@ -1830,6 +1837,7 @@ export function useUpdateChannel() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['channels'] });
       queryClient.invalidateQueries({ queryKey: ['channel', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['allChannelSummarys'] });
       toast.success(t('channels.messages.updateSuccess'));
     },
     onError: (error) => {
@@ -1894,6 +1902,7 @@ export function useUpdateChannelSettings() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['channels'] });
       queryClient.invalidateQueries({ queryKey: ['channel', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['allChannelSummarys'] });
       queryClient.invalidateQueries({ queryKey: ['provider-quotas'] });
     },
     onError: (error) => {

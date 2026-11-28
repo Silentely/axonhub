@@ -378,6 +378,30 @@ func fetchModelsInputMatchesChannel(input FetchModelsInput, ch *ent.Channel) boo
 		strings.TrimRight(input.BaseURL, "/") == strings.TrimRight(ch.BaseURL, "/")
 }
 
+// 只从已保存且通过校验的 OpenAI Realtime 配置推导可复用密钥的模型地址。
+func fetchModelsInputMatchesOpenAIRealtime(input FetchModelsInput, ch *ent.Channel) bool {
+	if ch == nil || ch.Type != channel.TypeOpenai || input.ChannelType != ch.Type.String() || ch.Settings == nil {
+		return false
+	}
+	cfg := ch.Settings.Realtime
+	if cfg == nil || !cfg.Enabled || ValidateChannelRealtime(ch.Type, cfg) != nil {
+		return false
+	}
+	base := cfg.BaseURL
+	if base == "" {
+		base = "wss://api.openai.com"
+	}
+	u, err := url.Parse(base)
+	if err != nil {
+		return false
+	}
+	host := strings.ToLower(u.Hostname())
+	if port := strings.TrimLeft(u.Port(), "0"); port != "" && port != "443" {
+		host += ":" + port
+	}
+	return input.BaseURL == "https://"+host
+}
+
 type modelFetchMode int
 
 const (
@@ -465,7 +489,8 @@ func (f *ModelFetcher) fetchModels(ctx context.Context, input FetchModelsInput, 
 		}
 
 		if apiKey == "" {
-			if !fetchModelsInputMatchesChannel(input, ch) {
+			matchesChannel := fetchModelsInputMatchesChannel(input, ch)
+			if !matchesChannel && !fetchModelsInputMatchesOpenAIRealtime(input, ch) {
 				return &FetchModelsResult{
 					Models: []ModelIdentify{},
 					Error:  lo.ToPtr("API key is required when channel type or base URL is changed"),
@@ -480,7 +505,9 @@ func (f *ModelFetcher) fetchModels(ctx context.Context, input FetchModelsInput, 
 				apiKey = ch.Credentials.VertexAPIKeys[0].APIKey
 			}
 			input.ChannelType = ch.Type.String()
-			input.BaseURL = ch.BaseURL
+			if matchesChannel {
+				input.BaseURL = ch.BaseURL
+			}
 		}
 
 		if ch.Type == channel.TypeGeminiVertex {

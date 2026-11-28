@@ -15,9 +15,11 @@ import (
 	"errors"
 	"net"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/looplj/axonhub/llm"
+	"github.com/looplj/axonhub/llm/internal/pkg/xurl"
 )
 
 type Capability struct {
@@ -50,29 +52,37 @@ func NewAdapter(model string) (*Adapter, error) {
 	return &Adapter{Capability: c}, nil
 }
 func ValidateEndpoint(baseURL, path string) error {
+	_, err := parseEndpoint(baseURL, path)
+	return err
+}
+
+// 浏览器会把以数字结尾的主机按 IPv4 规则解析。
+var numericHostSuffix = regexp.MustCompile(`(?i)(^|\.)([0-9]+|0x[0-9a-f]*)\.?$`)
+
+func parseEndpoint(baseURL, path string) (*url.URL, error) {
 	if baseURL == "" {
 		baseURL = "wss://api.openai.com"
 	}
-	u, err := url.Parse(baseURL)
-	if err != nil || u.Scheme != "wss" || u.Hostname() == "" || net.ParseIP(u.Hostname()) != nil || u.User != nil || u.RawQuery != "" || u.Fragment != "" || u.Opaque != "" || u.RawPath != "" || (u.Path != "" && u.Path != "/") {
-		return errors.New("OpenAI Realtime requires a wss:// host without a path or query")
+	u, err := xurl.ParseRealtimeBaseURL(baseURL, "/v1", func(u *url.URL) bool {
+		return net.ParseIP(u.Hostname()) == nil && !strings.Contains(u.Hostname(), ":") && !numericHostSuffix.MatchString(u.Hostname())
+	})
+	if err != nil {
+		return nil, errors.New("OpenAI Realtime requires a wss:// host with an optional /v1 path and no query or fragment")
 	}
 	if path != "" && path != "/v1/realtime" {
-		return errors.New("OpenAI Realtime path must be /v1/realtime")
+		return nil, errors.New("OpenAI Realtime path must be /v1/realtime")
 	}
-	return nil
+	return u, nil
 }
 func EndpointURL(baseURL, path, model string) (string, error) {
-	if err := ValidateEndpoint(baseURL, path); err != nil {
+	base, err := parseEndpoint(baseURL, path)
+	if err != nil {
 		return "", err
 	}
 	if _, err := NewAdapter(model); err != nil {
 		return "", err
 	}
-	if baseURL == "" {
-		baseURL = "wss://api.openai.com"
-	}
-	return strings.TrimSuffix(baseURL, "/") + "/v1/realtime?" + url.Values{"model": []string{model}}.Encode(), nil
+	return xurl.RealtimeModelURL(base, "/v1/realtime", model), nil
 }
 func (a *Adapter) Client(data []byte) ([]byte, error) {
 	var event map[string]json.RawMessage

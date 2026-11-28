@@ -9,29 +9,39 @@ import (
 	"errors"
 	"net/url"
 	"regexp"
-	"strings"
+
+	"github.com/looplj/axonhub/llm/internal/pkg/xurl"
 )
 
-const qwenRealtimePath = "/api-ws/v1/realtime"
+const qwenRealtimePrefix = "/api-ws/v1"
+const qwenRealtimePath = qwenRealtimePrefix + "/realtime"
 
 var trustedHost = regexp.MustCompile(`^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.(?:cn-beijing|ap-southeast-1)\.maas\.aliyuncs\.com$`)
 
 func ValidateEndpoint(baseURL, path string) error {
-	u, err := url.Parse(baseURL)
-	if err != nil || u.Scheme != "wss" || !trustedHost.MatchString(u.Host) || u.User != nil || u.RawQuery != "" || u.Fragment != "" || u.RawPath != "" || (u.Path != "" && u.Path != "/") || strings.ContainsAny(baseURL, "?#") {
-		return errors.New("Qwen realtime requires a trusted Workspace regional WSS host")
+	_, err := parseEndpoint(baseURL, path)
+	return err
+}
+
+func parseEndpoint(baseURL, path string) (*url.URL, error) {
+	u, err := xurl.ParseRealtimeBaseURL(baseURL, qwenRealtimePrefix, func(u *url.URL) bool {
+		return trustedHost.MatchString(u.Host)
+	})
+	if err != nil {
+		return nil, errors.New("Qwen realtime requires a trusted Workspace regional WSS host with an optional /api-ws/v1 path")
 	}
 	if path != qwenRealtimePath {
-		return errors.New("Qwen realtime requires /api-ws/v1/realtime")
+		return nil, errors.New("Qwen realtime requires /api-ws/v1/realtime")
 	}
-	return nil
+	return u, nil
 }
 func EndpointURL(baseURL, path, model string) (string, error) {
-	if err := ValidateEndpoint(baseURL, path); err != nil {
+	base, err := parseEndpoint(baseURL, path)
+	if err != nil {
 		return "", err
 	}
 	if !IsAssociatedModel(model) {
 		return "", errUnsupportedModel(model)
 	}
-	return strings.TrimSuffix(baseURL, "/") + qwenRealtimePath + "?" + url.Values{"model": []string{model}}.Encode(), nil
+	return xurl.RealtimeModelURL(base, qwenRealtimePath, model), nil
 }

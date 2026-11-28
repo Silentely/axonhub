@@ -6,8 +6,8 @@ AxonHub 提供面向 OpenAI Realtime GA 客户端的 WebSocket API，以及独�
 
 1. 保留现有 `openai` 或 `bailian` 渠道，不新建服务商类型。在渠道密钥管理中加入对应官方 API Key。
 2. 在渠道主表单中为 OpenAI 选择 `openai/realtime-ws`，为百炼选择 `qwen/realtime-ws`。独立保存在渠道的 `settings.realtime`，包含 `enabled`、`protocol`、`baseURL`、`path` 和可选的 `handshakeTimeoutMs`、`clientEventsPerSecond`。握手超时可设为 1000–60000 毫秒，留空继承服务配置。客户端事件速率可设为每秒 256–4096 条，留空继承服务端默认值 1024。选择 Realtime 后，在现有的 **Base URL** 输入框中填写 WSS Host。AxonHub 将其保存在 `settings.realtime.baseURL`，并保留渠道原有的 HTTP Base URL。
-3. OpenAI 官方使用 `wss://api.openai.com` 和 `/v1/realtime`。支持的型号包括 `gpt-realtime-2.1` 和 `gpt-realtime-2.1-mini`。
-4. 百炼应从控制台复制所选业务空间的可信 API Host，使用其 WSS 地址，路径为 `/api-ws/v1/realtime`。Host 仅接受 `maas.aliyuncs.com` 下的 `cn-beijing` 和 `ap-southeast-1` 地域；保留控制台提供的完整主机标签，包括实际存在的 `llm-` 前缀。Workspace、地域、密钥必须属于同一官方资源配置。
+3. OpenAI 的 **Base URL** 可填 `wss://api.openai.com` 或 `wss://api.openai.com/v1`，两种写法都连接到 `/v1/realtime`。支持的型号包括 `gpt-realtime-2.1` 和 `gpt-realtime-2.1-mini`。
+4. 选择 Qwen Realtime 后，未配置地址的 **Base URL** 会预填 `wss://llm-<workspace-id>.cn-beijing.maas.aliyuncs.com`。将示例替换为百炼控制台中所选业务空间对应的 WSS 地址。可在主机后加 `/api-ws/v1`，AxonHub 会连接到 `/api-ws/v1/realtime`。Host 仅接受 `maas.aliyuncs.com` 下的 `cn-beijing` 和 `ap-southeast-1` 地域；保留控制台提供的完整主机标签，包括实际存在的 `llm-` 前缀。Workspace、地域、密钥必须属于同一官方资源配置。
 5. 在渠道层配置支持模型白名单、模型映射、模型关联和 API Key Profile 授权。Qwen 首批型号为 `qwen3.8-omni-flash-realtime`、`qwen3.5-omni-plus-realtime`、`qwen3.5-omni-flash-realtime`。Realtime 协议选择属于渠道主表单，不通过端点管理设置。
 6. 配置分项价格，不能用普通文本模型的 `prompt_tokens`/`completion_tokens` 代替实时价格。使用管理员维护的官方当前费率与币种，不能混合人民币与美元。
 7. 渠道连接测试执行真实 WS 握手、会话配置确认及轻量 conversation item 确认，不触发生成。此探测成功不代表真实语音或账单验收通过。

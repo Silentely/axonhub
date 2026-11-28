@@ -99,6 +99,19 @@ func TestValidateEndpointRejectsPath(t *testing.T) {
 }
 
 func TestEndpointURL(t *testing.T) {
+	for _, suffix := range []string{"/v1", "/api-ws/v1/realtime", "/api-ws/v1//", "/api-ws/v1?", "/api-ws/v1#", ":"} {
+		if err := ValidateEndpoint("wss://ws-abc.cn-beijing.maas.aliyuncs.com"+suffix, qwenRealtimePath); err == nil {
+			t.Errorf("unexpected valid suffix %q", suffix)
+		}
+	}
+	for _, suffix := range []string{"/api-ws/v1", "/api-ws/v1/"} {
+		const host = "wss://ws-abc.cn-beijing.maas.aliyuncs.com"
+		const model = "qwen3.8-omni-flash-realtime"
+		got, err := EndpointURL(host+suffix, qwenRealtimePath, model)
+		if want := host + qwenRealtimePath + "?model=" + model; err != nil || got != want {
+			t.Fatalf("EndpointURL(%q) = %q, %v; want %q", suffix, got, err, want)
+		}
+	}
 	got, err := EndpointURL(
 		"wss://ws-abc.cn-beijing.maas.aliyuncs.com",
 		qwenRealtimePath,

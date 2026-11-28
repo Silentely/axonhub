@@ -49,6 +49,22 @@ func TestNativeUsageModalitiesAndCachedSubsets(t *testing.T) {
 	}
 }
 func TestNativeEndpointAllowsWebSocketHosts(t *testing.T) {
+	for _, suffix := range []string{"/api-ws/v1", "/v1/realtime", "/v1//", "/v1?", "/v1#", ":", ":0", ":99999"} {
+		require.Error(t, ValidateEndpoint("wss://api.openai.com"+suffix, ""))
+	}
+	for _, host := range []string{"127.1", "0x7f000001", "2130706433"} {
+		require.Error(t, ValidateEndpoint("wss://"+host, ""))
+	}
+	for _, suffix := range []string{"/v1", "/v1/"} {
+		base := "wss://proxy.example.test" + suffix
+		target, err := EndpointURL(base, "", "gpt-realtime-2.1")
+		require.NoError(t, err)
+		require.Equal(t, "wss://proxy.example.test/v1/realtime?model=gpt-realtime-2.1", target)
+
+		target, err = TranslationEndpointURL(base, "", TranslationModel)
+		require.NoError(t, err)
+		require.Equal(t, "wss://proxy.example.test/v1/realtime/translations?model="+TranslationModel, target)
+	}
 	target, err := EndpointURL("wss://api.openai.com", "/v1/realtime", "gpt-realtime-2.1")
 	require.NoError(t, err)
 	require.Equal(t, "wss://api.openai.com/v1/realtime?model=gpt-realtime-2.1", target)

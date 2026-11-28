@@ -14,12 +14,32 @@ test('channel Realtime configuration saves and echoes without an endpoint', () =
 
 test('Realtime Base URL is editable, defaults by provider, and accepts only secure WSS URLs', () => {
   assert.deepEqual(realtimeForSelection('openai/realtime-ws', undefined, '', ''), { enabled: true, protocol: 'openai/realtime-ws', baseURL: 'wss://api.openai.com', path: '/v1/realtime' });
-  assert.equal(getChannelBaseURLInputValue('openai/realtime-ws', '', ''), 'wss://api.openai.com');
+  assert.equal(getChannelBaseURLInputValue('openai/realtime-ws', '', undefined), 'wss://api.openai.com');
+  assert.equal(getChannelBaseURLInputValue('openai/realtime-ws', '', ''), '');
+  assert.equal(getModelFetchBaseURL('openai/realtime-ws', '', ''), 'https://api.openai.com');
   assert.equal(realtimeForSelection('openai/realtime-ws', undefined, 'wss://proxy.example.test', '').baseURL, 'wss://proxy.example.test');
-  assert.equal(getChannelBaseURLInputValue('qwen/realtime-ws', '', ''), '', 'the example belongs in the placeholder, not the editable value');
+  assert.equal(getChannelBaseURLInputValue('qwen/realtime-ws', '', undefined), 'wss://llm-<workspace-id>.cn-beijing.maas.aliyuncs.com');
   for (const host of ['http://proxy.example.test', 'ws://proxy.example.test', 'wss://', 'wss://127.0.0.1', 'wss://proxy.example.test/path', 'wss://user@proxy.example.test']) assert.throws(() => realtimeForSelection('openai/realtime-ws', undefined, host, ''));
   for (const host of ['ws://llm-workspace.cn-beijing.maas.aliyuncs.com', 'wss://127.0.0.1', 'wss://workspace.cn-beijing.maas.aliyuncs.com?api_key=x', 'https://workspace.cn-beijing.maas.aliyuncs.com', 'wss://llm-<workspace-id>.cn-beijing.maas.aliyuncs.com']) assert.throws(() => realtimeForSelection('qwen/realtime-ws', undefined, host, ''));
   for (const timeout of ['NaN', '999', '60001', '1234.5']) assert.throws(() => realtimeForSelection('openai/realtime-ws', undefined, '', timeout));
+});
+
+test('Realtime accepts only its provider version prefix and fetches models from the host', () => {
+  for (const [format, host, prefix] of [
+    ['openai/realtime-ws', 'wss://api.openai.com', '/v1'],
+    ['qwen/realtime-ws', 'wss://workspace.cn-beijing.maas.aliyuncs.com', '/api-ws/v1'],
+  ]) {
+    for (const suffix of [prefix, prefix + '/']) {
+      const input = host + suffix;
+      const settings = realtimeForSelection(format, undefined, input, '');
+      assert.equal(settings.baseURL, host + prefix);
+      assert.equal(settings.path, prefix + '/realtime');
+      assert.equal(getModelFetchBaseURL(format, '', input), host.replace('wss:', 'https:'));
+    }
+    for (const suffix of [prefix + '/realtime', prefix + '?', prefix + '#', prefix + '//', ':', ':0', ':99999']) {
+      assert.throws(() => realtimeForSelection(format, undefined, host + suffix, ''));
+    }
+  }
 });
 
 test('legacy Realtime endpoints are detected rather than silently filtered for saving', () => {
@@ -53,14 +73,14 @@ test('quick models follow the selected Realtime protocol', () => {
 test('Realtime reuses the Base URL field and keeps the saved HTTP value when toggled', () => {
   const httpBaseURL = 'https://dashscope.aliyuncs.com/compatible-mode/v1';
   const qwenHost = 'wss://llm-ikngb8j2sjh4l2sw.cn-beijing.maas.aliyuncs.com';
-  assert.equal(getChannelBaseURLInputValue('openai/realtime-ws', httpBaseURL, qwenHost), 'wss://api.openai.com');
+  assert.equal(getChannelBaseURLInputValue('openai/realtime-ws', httpBaseURL, qwenHost), qwenHost);
   assert.equal(getChannelBaseURLInputValue('qwen/realtime-ws', httpBaseURL, qwenHost), qwenHost);
   assert.equal(getChannelBaseURLInputValue('qwen/realtime-ws', httpBaseURL, 'wss://llm-w'), 'wss://llm-w');
   assert.equal(getChannelBaseURLInputValue('qwen/realtime-ws', httpBaseURL, ''), '', 'an empty edit must stay empty');
   assert.equal(getChannelBaseURLInputValue('openai/chat_completions', httpBaseURL, qwenHost), httpBaseURL);
 
   const actionDialog = readFileSync(new URL('../components/channels-action-dialog.tsx', import.meta.url), 'utf8');
-  assert.match(actionDialog, /selectedApiFormat === 'qwen\/realtime-ws' \? t\('channels\.realtime\.qwenHostPlaceholder'\)/);
+  assert.doesNotMatch(actionDialog, /selectedApiFormat === 'qwen\/realtime-ws' \? t\('channels\.realtime\.qwenHostPlaceholder'\)/);
 });
 
 test('Realtime endpoint management projects only the selected protocol as its default endpoint', () => {
@@ -96,9 +116,10 @@ test('Realtime model discovery uses the HTTP API host derived from the selected 
   assert.match(fetchModelsHandler, /getModelFetchBaseURL\(selectedApiFormat/);
 });
 
-test('Realtime provider badges vary by protocol while preserving the endpoint protocol column', () => {
-  assert.match(getRealtimeProviderBadgeClass({ enabled: true, protocol: 'openai/realtime-ws' }), /teal/);
-  assert.match(getRealtimeProviderBadgeClass({ enabled: true, protocol: 'qwen/realtime-ws' }), /fuchsia/);
+test('Realtime providers share the same badge color while preserving the endpoint protocol column', () => {
+  const qwenBadge = getRealtimeProviderBadgeClass({ enabled: true, protocol: 'qwen/realtime-ws' });
+  assert.match(qwenBadge, /fuchsia/);
+  assert.equal(getRealtimeProviderBadgeClass({ enabled: true, protocol: 'openai/realtime-ws' }), qwenBadge);
   assert.equal(getRealtimeProviderBadgeClass({ enabled: false, protocol: 'openai/realtime-ws' }), undefined);
 
   const columns = readFileSync(new URL('../components/channels-columns.tsx', import.meta.url), 'utf8');

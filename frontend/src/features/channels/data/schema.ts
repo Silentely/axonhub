@@ -1194,6 +1194,13 @@ export const channelSummarySchema = z.object({
   type: channelTypeSchema,
   status: channelStatusSchema,
   baseURL: z.string(),
+  settings: z.object({
+    realtime: z.object({
+      enabled: z.boolean(),
+      protocol: z.string(),
+      baseURL: z.string(),
+    }).optional().nullable(),
+  }).optional().nullable(),
   orderingWeight: z.number(),
   tags: z.array(z.string()).optional().default([]).nullable(),
   endpoints: z.array(channelEndpointSchema).optional().default([]).nullable(),

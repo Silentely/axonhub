@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useAllChannelSummarys, useBulkUpdateChannelOrdering } from '../data/channels';
+import { OPENAI_REALTIME_HOST } from '../data/channel-realtime';
 import { ChannelSummary } from '../data/schema';
 import { parseOrderingWeightInput } from '../utils/ordering-weight';
 
@@ -61,6 +62,10 @@ const ChannelOrderingItemComponent = memo(function ChannelOrderingItemComponent(
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: channel.id });
   const { t } = useTranslation();
   const [localWeight, setLocalWeight] = useState(orderingWeight.toString());
+  const realtime = channel.settings?.realtime;
+  const baseURL = realtime?.enabled
+    ? realtime.baseURL || (realtime.protocol === 'openai/realtime-ws' ? OPENAI_REALTIME_HOST : '')
+    : channel.baseURL;
 
   useEffect(() => {
     setLocalWeight(orderingWeight.toString());
@@ -156,7 +161,7 @@ const ChannelOrderingItemComponent = memo(function ChannelOrderingItemComponent(
 
         <div className='hidden flex-1 items-center gap-2 sm:flex'>
           <div className='bg-border h-3 w-[1px]' />
-          <span className='text-muted-foreground truncate font-mono text-[10px] opacity-70'>{channel.baseURL}</span>
+          <span className='text-muted-foreground truncate font-mono text-[10px] opacity-70'>{baseURL}</span>
         </div>
       </div>
 

@@ -1195,6 +1195,7 @@ export const channelSummarySchema = z.object({
   status: channelStatusSchema,
   baseURL: z.string(),
   settings: z.object({
+    quotaRoutingMode: channelSettingsSchema.shape.quotaRoutingMode,
     realtime: z.object({
       enabled: z.boolean(),
       protocol: z.string(),

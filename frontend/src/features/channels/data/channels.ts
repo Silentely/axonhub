@@ -1030,6 +1030,7 @@ const ALL_CHANNEL_SUMMARYS_QUERY = `
       orderingWeight
       tags
       settings {
+        quotaRoutingMode
         realtime {
           enabled
           protocol

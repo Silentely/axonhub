@@ -2,6 +2,7 @@ package biz
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -774,6 +775,63 @@ func TestFetchModelsWithChannelIDUsesStoredCredentialsOnlyForStoredEndpoint(t *t
 	}
 	if len(result.Models) != 1 || result.Models[0].ID != "stored-model" {
 		t.Fatalf("unexpected models: %#v", result.Models)
+	}
+}
+
+func TestFetchModelsWithSavedOpenAIRealtimeEndpoint(t *testing.T) {
+	ctx := authz.WithSystemBypass(t.Context(), "test")
+	db := enttest.NewEntClient(t, "sqlite3", "file:fetch_models_saved_realtime?mode=memory&_fk=0")
+	defer db.Close()
+
+	for _, tc := range []struct {
+		name, saved, requested string
+		allowed                bool
+	}{
+		{"exact match", "wss://realtime.example.test:8443/v1/", "https://realtime.example.test:8443", true},
+		{"explicit default", "wss://api.openai.com", "https://api.openai.com", true},
+		{"implicit default", "", "https://api.openai.com", false},
+		{"different host", "wss://realtime.example.test", "https://other.example.test", false},
+		{"different port", "wss://realtime.example.test:8443", "https://realtime.example.test", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ch, err := db.Channel.Create().
+				SetName(tc.name).
+				SetType(channel.TypeOpenai).
+				SetBaseURL("https://ordinary.example.test/v1").
+				SetCredentials(objects.ChannelCredentials{APIKey: "stored-test-key"}).
+				SetSupportedModels([]string{"test-model"}).
+				SetDefaultTestModel("test-model").
+				SetSettings(&objects.ChannelSettings{Realtime: &objects.ChannelRealtimeConfig{
+					Enabled: true, Protocol: "openai/realtime-ws", BaseURL: tc.saved, Path: "/v1/realtime",
+				}}).
+				Save(ctx)
+			require.NoError(t, err)
+
+			var requests []*http.Request
+			client := &http.Client{Transport: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+				requests = append(requests, req)
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(strings.NewReader(`{"data":[{"id":"test-model"}]}`)),
+				}, nil
+			})}
+			fetcher := NewModelFetcher(httpclient.NewHttpClientWithClient(client), &ChannelService{AbstractService: &AbstractService{db: db}})
+			result, err := fetcher.FetchModels(ctx, FetchModelsInput{
+				ChannelType: ch.Type.String(), BaseURL: tc.requested, ChannelID: &ch.ID,
+			})
+			require.NoError(t, err)
+			if !tc.allowed {
+				require.Empty(t, requests)
+				require.NotNil(t, result.Error)
+				require.Contains(t, *result.Error, "API key is required")
+				return
+			}
+			require.Nil(t, result.Error)
+			require.Len(t, requests, 1)
+			require.Equal(t, tc.requested+"/v1/models", requests[0].URL.String())
+			require.Equal(t, "Bearer stored-test-key", requests[0].Header.Get("Authorization"))
+			require.Equal(t, []ModelIdentify{{ID: "test-model"}}, result.Models)
+		})
 	}
 }
 

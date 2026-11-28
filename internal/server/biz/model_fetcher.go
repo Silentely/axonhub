@@ -378,20 +378,16 @@ func fetchModelsInputMatchesChannel(input FetchModelsInput, ch *ent.Channel) boo
 		strings.TrimRight(input.BaseURL, "/") == strings.TrimRight(ch.BaseURL, "/")
 }
 
-// 只从已保存且通过校验的 OpenAI Realtime 配置推导可复用密钥的模型地址。
+// 仅显式保存的 OpenAI Realtime 地址可授权复用密钥，连接默认值不参与匹配。
 func fetchModelsInputMatchesOpenAIRealtime(input FetchModelsInput, ch *ent.Channel) bool {
 	if ch == nil || ch.Type != channel.TypeOpenai || input.ChannelType != ch.Type.String() || ch.Settings == nil {
 		return false
 	}
 	cfg := ch.Settings.Realtime
-	if cfg == nil || !cfg.Enabled || ValidateChannelRealtime(ch.Type, cfg) != nil {
+	if cfg == nil || !cfg.Enabled || cfg.BaseURL == "" || ValidateChannelRealtime(ch.Type, cfg) != nil {
 		return false
 	}
-	base := cfg.BaseURL
-	if base == "" {
-		base = "wss://api.openai.com"
-	}
-	u, err := url.Parse(base)
+	u, err := url.Parse(cfg.BaseURL)
 	if err != nil {
 		return false
 	}

@@ -244,7 +244,7 @@ Here are some screenshots of AxonHub in action:
 | **Image Generation** | ✅ Done | Image generation               | [Image Generation](docs/en/api-reference/image-generation.md) |
 | **Rerank**           | ✅ Done    | Results ranking                | [Rerank API](docs/en/api-reference/rerank-api.md) |
 | **Embedding**        | ✅ Done    | Vector embedding generation    | [Embedding API](docs/en/api-reference/embedding-api.md) |
-| **Realtime**         | ✅ Done    | Live conversation capabilities | [Realtime Guide](docs/en/guides/realtime.md)                                            |
+| **Realtime**         | ✅ Done    | Live conversation capabilities | [Realtime API](docs/en/api-reference/realtime.md)                                            |
 
 ---
 

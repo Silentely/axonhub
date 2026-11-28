@@ -24,7 +24,6 @@ Welcome to the AxonHub documentation center! This index will help you quickly fi
 | [Request Tracing](guides/tracing.md) | Complete request traceability and database request body deduplication |
 | [Request Override](guides/request-override.md) | Dynamically modify request parameters |
 | [Security](guides/security.md) | IP access control, IP blocklist, and API key IP restriction |
-| [Realtime API](guides/realtime.md) | Configure Realtime channels, clients, and usage limits |
 | [Prompt Protection Rules](guides/prompt-protection-rules.md) | Sensitive information filtering and protection |
 | [Antigravity](guides/antigravity.md) | Advanced routing and optimization features |
 
@@ -46,6 +45,7 @@ Welcome to the AxonHub documentation center! This index will help you quickly fi
 | [Image Generation API](api-reference/image-generation.md) | Image generation interface documentation |
 | [Embedding API](api-reference/embedding-api.md) | Vector embedding interface documentation |
 | [Rerank API](api-reference/rerank-api.md) | Reranking interface documentation |
+| [Realtime API](api-reference/realtime.md) | WebSocket endpoints, examples, and channel configuration |
 | [System One API](api-reference/systemone-api.md) | Native decision inference interface documentation |
 
 ### 🛠️ Development

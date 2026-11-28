@@ -1,8 +1,8 @@
 // 职责: 使用本地 Mock WebSocket 和真实 Nginx 容器验证 Upgrade 与双向转发配置。
 // 关联文件:
 //
-//	docs/en/guides/realtime.md
-//	docs/zh/guides/realtime.md
+//	docs/en/api-reference/realtime.md
+//	docs/zh/api-reference/realtime.md
 //
 // 注意事项:
 //

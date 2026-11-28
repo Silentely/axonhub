@@ -54,7 +54,7 @@ fmt.Println(responseText)
 
 ### OpenAI Realtime API
 
-使用 WebSocket Upgrade 连接 `GET /v1/realtime?model={model}`。语音到语音翻译使用 `GET /v1/realtime/translations?model=gpt-realtime-translate`。渠道配置、SDK Base URL、事件行为和计费方式请参阅 [Realtime API 使用指南](../guides/realtime.md)。
+使用 WebSocket Upgrade 连接 `GET /v1/realtime?model={model}`。语音到语音翻译使用 `GET /v1/realtime/translations?model=gpt-realtime-translate`。渠道配置、SDK Base URL、事件行为和计费方式请参阅 [Realtime API 参考文档](realtime.md)。
 
 ### OpenAI Responses API
 

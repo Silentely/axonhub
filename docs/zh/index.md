@@ -24,7 +24,6 @@
 | [请求追踪](guides/tracing.md) | 完整的请求链路追踪与数据库请求正文去重 |
 | [请求覆盖](guides/request-override.md) | 动态修改请求参数 |
 | [安全功能](guides/security.md) | IP 访问控制、IP 黑名单和 API Key IP 限制 |
-| [Realtime API](guides/realtime.md) | 配置实时渠道、客户端入口和用量限制 |
 | [提示词保护规则](guides/prompt-protection-rules.md) | 敏感信息过滤和保护 |
 
 ### 🤖 AI 编程工具集成
@@ -45,6 +44,7 @@
 | [图像生成 API](api-reference/image-generation.md) | 图像生成接口文档 |
 | [嵌入 API](api-reference/embedding-api.md) | 向量嵌入接口文档 |
 | [重排序 API](api-reference/rerank-api.md) | 重排序接口文档 |
+| [Realtime API](api-reference/realtime.md) | WebSocket 入口、示例和渠道配置 |
 | [System One API](api-reference/systemone-api.md) | 原生决策推理接口文档 |
 
 ### 🛠️ 开发文档

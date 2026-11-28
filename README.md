@@ -247,7 +247,7 @@
 | **图片生成（Image Generation）** | ✅ Done | 图片生成 | [Image Generation](docs/zh/api-reference/image-generation.md) |
 | **重排序（Rerank）** | ✅ Done | 结果排序 | [Rerank API](docs/zh/api-reference/rerank-api.md) |
 | **嵌入（Embedding）** | ✅ Done | 向量嵌入生成 | [Embedding API](docs/zh/api-reference/embedding-api.md) |
-| **实时对话（Realtime）** | ✅ Done | 实时对话功能 | [Realtime 指南](docs/zh/guides/realtime.md) |
+| **实时对话（Realtime）** | ✅ Done | 实时对话功能 | [Realtime API](docs/zh/api-reference/realtime.md) |
 
 ---
 

@@ -1,36 +1,10 @@
-# Realtime API 使用指南
+# Realtime API 参考文档
+
+## 概述
 
 AxonHub 提供面向 OpenAI Realtime GA 客户端的 WebSocket API，以及独立的 Qwen 原生 Realtime 入口。本指南介绍如何配置服务商渠道、选择客户端入口，并了解连接限制、用量和计费。
 
-## 配置 Realtime 渠道
-
-1. 保留现有 `openai` 或 `bailian` 渠道，不新建服务商类型。在渠道密钥管理中加入对应官方 API Key。
-2. 在渠道主表单中为 OpenAI 选择 `openai/realtime-ws`，为百炼选择 `qwen/realtime-ws`。独立保存在渠道的 `settings.realtime`，包含 `enabled`、`protocol`、`baseURL`、`path` 和可选的 `handshakeTimeoutMs`、`clientEventsPerSecond`。握手超时可设为 1000–60000 毫秒，留空继承服务配置。客户端事件速率可设为每秒 256–4096 条，留空继承服务端默认值 1024。选择 Realtime 后，在现有的 **Base URL** 输入框中填写 WSS Host。AxonHub 将其保存在 `settings.realtime.baseURL`，并保留渠道原有的 HTTP Base URL。
-3. OpenAI 的 **Base URL** 可填 `wss://api.openai.com` 或 `wss://api.openai.com/v1`，两种写法使用相同的上游地址。支持的型号包括 `gpt-realtime-2.1` 和 `gpt-realtime-2.1-mini`。
-4. 选择 Qwen Realtime 后，未配置地址的 **Base URL** 会预填 `wss://llm-<workspace-id>.cn-beijing.maas.aliyuncs.com`。将示例替换为百炼控制台中所选业务空间对应的 WSS 地址。可在主机后加 `/api-ws/v1`，AxonHub 会连接到 `/api-ws/v1/realtime`。Host 仅接受 `maas.aliyuncs.com` 下的 `cn-beijing` 和 `ap-southeast-1` 地域；保留控制台提供的完整主机标签，包括实际存在的 `llm-` 前缀。Workspace、地域、密钥必须属于同一官方资源配置。Qwen 首批型号为 `qwen3.8-omni-flash-realtime`、`qwen3.5-omni-plus-realtime`、`qwen3.5-omni-flash-realtime`。
-5. 在渠道层配置支持模型白名单、模型映射、模型关联和 API Key Profile 授权。Realtime 协议选择属于渠道主表单，不通过端点管理设置。
-6. 配置分项价格，不能用普通文本模型的 `prompt_tokens`/`completion_tokens` 代替实时价格。使用管理员维护的官方当前费率与币种，不能混合人民币与美元。
-7. 渠道连接测试执行真实 WS 握手、会话配置确认及轻量 conversation item 确认，不触发生成。此探测成功不代表真实语音或账单验收通过。
-
-OpenAI 也支持自定义 WSS 域名。常规会话使用 `/v1/realtime`，实时翻译使用 `/v1/realtime/translations`。Base URL 只接受主机地址和对应的可选版本前缀，请省略完整请求路径、查询参数和片段。
-
-端点管理不提供 Realtime 协议。通过 `saveChannelEndpoints` 或其他端点写入输入传入 `openai/realtime-ws`、`qwen/realtime-ws`，服务端会返回 HTTP `422` 和错误码 `ENDPOINT_REALTIME_NOT_ALLOWED`，不会忽略或保存。将 `settings.realtime.enabled` 设为 `false`，或在渠道主表单切换到非 Realtime 协议，即可停止新实时会话，无需删除 HTTP 端点。
-
-渠道选择 Realtime 后只承接实时请求。原有 HTTP Base URL、自定义端点和模型配置继续保存在渠道中，端点管理在此模式下显示停用提示。切回普通协议后，默认端点和自定义端点恢复路由。此前混合使用的渠道如果两种流量都需要，请分别配置普通渠道和 Realtime 渠道。
-
-Realtime 渠道配置适用于现有 OpenAI 和百炼渠道类型。xAI Subscription 使用服务商管理的端点，不接受自定义 Realtime 端点。
-
-握手时，AxonHub 先应用 API Key Profile 渠道过滤、模型路由策略、渠道配额路由策略和已配置的负载均衡策略，再将整个会话固定到一个渠道。WebSocket 建立后不会在不同上游之间切换。
-
-上游握手返回 HTTP 状态码时，会交给所选渠道的 API Key 自动禁用规则处理。使用 `priority` 密钥策略时，匹配规则而被禁用的凭证会让后续建连选择下一个可用密钥。Realtime 的 `circuit-breaker` 策略会记录上游握手失败、失败响应和已完成响应，供后续渠道选路使用。
-
-现有启动数据迁移流程会在渠道缓存加载之前，把历史 `endpoints` 中的 Realtime 配置搬到 `settings.realtime`。每个渠道的配置搬迁与旧条目清理原子完成，保留普通端点及其他设置。已有渠道级 Realtime 设置优先，包括显式禁用状态；重复执行不再写入渠道。该迁移只改变 JSON 配置结构，不新增数据库表或列。
-
-备份恢复使用同一转换逻辑处理合法的历史端点。启动时，无法转换的旧配置会保留原记录并记录警告，旧端点不会启用。恢复备份时，若其中包含无法转换的 Realtime 配置，恢复会拒绝写入并返回错误。
-
-迁移遵循现有数据库自动迁移开关；若已关闭，需要先受控启用迁移启动一次，再开放迁移后的 Realtime 渠道。混合版本发布时先排空 Realtime 流量，完成全部实例升级后再开放，旧二进制不能读取新的渠道配置。
-
-## 选择客户端入口
+## 支持的端点
 
 统一入口为 `GET /v1/realtime?model={网关模型或别名}`，使用标准 WebSocket Upgrade 和 `Authorization: Bearer {AxonHub API Key}`。只支持服务端客户端；浏览器 Origin、URL 凭证及客户端指定的上游 Host 均被拒绝。入口使用严格鉴权，不回退到 No-Auth。
 
@@ -45,7 +19,9 @@ Realtime 渠道配置适用于现有 OpenAI 和百炼渠道类型。xAI Subscrip
 | OpenAI Realtime GA | `wss://gateway.example/v1/realtime?model={模型}` | SDK 追加 `/realtime` 时使用 `https://gateway.example/v1`；SDK 追加 `/v1/realtime` 时使用 `https://gateway.example` | 使用标准 OpenAI GA 事件；可路由到 OpenAI 上游，也可将 Qwen 模型转换为 GA 事件 |
 | Qwen 原生 Realtime | `wss://gateway.example/qwen/v1/realtime?model={模型}` | SDK 追加 `/realtime` 时使用 `https://gateway.example/qwen/v1`；SDK 追加 `/v1/realtime` 时使用 `https://gateway.example/qwen` | 客户端使用 Qwen 原生事件名，只路由到百炼 Qwen 上游 |
 
-两个入口都使用 AxonHub API Key 的 `Authorization: Bearer ...` Header。若客户端不能保留 Base URL 的路径前缀，需改用支持自定义完整 WebSocket URL 的客户端，并直接连接上表中的 WebSocket 入口。
+语音到语音翻译使用 `GET /v1/realtime/translations?model=gpt-realtime-translate`。会话事件见 [配置 OpenAI Realtime 翻译](#配置-openai-realtime-翻译)。
+
+两个对话入口都使用 AxonHub API Key 的 `Authorization: Bearer ...` Header。若客户端不能保留 Base URL 的路径前缀，需改用支持自定义完整 WebSocket URL 的客户端，并直接连接上表中的 WebSocket 入口。
 
 OpenAI 上游使用原生 GA 事件，保留合法未知扩展字段和事件顺序，不发送 `OpenAI-Beta: realtime=v1`，不经 Qwen 转换，不对音频重采样。OpenAI 在 `session.created` 提供完整有效音频配置时可直接使用已确认的默认值；修改参数时应发送 `session.update` 并等待 `session.updated`，再按新参数发送媒体。禁止在会话中修改模型、覆盖凭证或身份安全字段。Safety Identifier 由已鉴权的网关密钥及用户/项目生成不可逆摘要，不接受客户端覆盖。
 
@@ -83,6 +59,34 @@ ws.on('message', (bytes) => {
 ```
 
 Qwen 原生入口使用相同 Header，`session.update` 使用 `session.modalities: ['text']`、`session.turn_detection: null`，省略 GA 的 `session.type`。原生文本事件仍是 Qwen 的 `response.text.delta/done`。
+
+## 配置 Realtime 渠道
+
+1. 保留现有 `openai` 或 `bailian` 渠道，不新建服务商类型。在渠道密钥管理中加入对应官方 API Key。
+2. 在渠道主表单中为 OpenAI 选择 `openai/realtime-ws`，为百炼选择 `qwen/realtime-ws`。独立保存在渠道的 `settings.realtime`，包含 `enabled`、`protocol`、`baseURL`、`path` 和可选的 `handshakeTimeoutMs`、`clientEventsPerSecond`。握手超时可设为 1000–60000 毫秒，留空继承服务配置。客户端事件速率可设为每秒 256–4096 条，留空继承服务端默认值 1024。选择 Realtime 后，在现有的 **Base URL** 输入框中填写 WSS Host。AxonHub 将其保存在 `settings.realtime.baseURL`，并保留渠道原有的 HTTP Base URL。
+3. OpenAI 的 **Base URL** 可填 `wss://api.openai.com` 或 `wss://api.openai.com/v1`，两种写法使用相同的上游地址。支持的型号包括 `gpt-realtime-2.1` 和 `gpt-realtime-2.1-mini`。
+4. 选择 Qwen Realtime 后，未配置地址的 **Base URL** 会预填 `wss://llm-<workspace-id>.cn-beijing.maas.aliyuncs.com`。将示例替换为百炼控制台中所选业务空间对应的 WSS 地址。可在主机后加 `/api-ws/v1`，AxonHub 会连接到 `/api-ws/v1/realtime`。Host 仅接受 `maas.aliyuncs.com` 下的 `cn-beijing` 和 `ap-southeast-1` 地域；保留控制台提供的完整主机标签，包括实际存在的 `llm-` 前缀。Workspace、地域、密钥必须属于同一官方资源配置。Qwen 首批型号为 `qwen3.8-omni-flash-realtime`、`qwen3.5-omni-plus-realtime`、`qwen3.5-omni-flash-realtime`。
+5. 在渠道层配置支持模型白名单、模型映射、模型关联和 API Key Profile 授权。Realtime 协议选择属于渠道主表单，不通过端点管理设置。
+6. 配置分项价格，不能用普通文本模型的 `prompt_tokens`/`completion_tokens` 代替实时价格。使用管理员维护的官方当前费率与币种，不能混合人民币与美元。
+7. 渠道连接测试执行真实 WS 握手、会话配置确认及轻量 conversation item 确认，不触发生成。此探测成功不代表真实语音或账单验收通过。
+
+OpenAI 也支持自定义 WSS 域名。常规会话使用 `/v1/realtime`，实时翻译使用 `/v1/realtime/translations`。Base URL 只接受主机地址和对应的可选版本前缀，请省略完整请求路径、查询参数和片段。
+
+端点管理不提供 Realtime 协议。通过 `saveChannelEndpoints` 或其他端点写入输入传入 `openai/realtime-ws`、`qwen/realtime-ws`，服务端会返回 HTTP `422` 和错误码 `ENDPOINT_REALTIME_NOT_ALLOWED`，不会忽略或保存。将 `settings.realtime.enabled` 设为 `false`，或在渠道主表单切换到非 Realtime 协议，即可停止新实时会话，无需删除 HTTP 端点。
+
+渠道选择 Realtime 后只承接实时请求。原有 HTTP Base URL、自定义端点和模型配置继续保存在渠道中，端点管理在此模式下显示停用提示。切回普通协议后，默认端点和自定义端点恢复路由。此前混合使用的渠道如果两种流量都需要，请分别配置普通渠道和 Realtime 渠道。
+
+Realtime 渠道配置适用于现有 OpenAI 和百炼渠道类型。xAI Subscription 使用服务商管理的端点，不接受自定义 Realtime 端点。
+
+握手时，AxonHub 先应用 API Key Profile 渠道过滤、模型路由策略、渠道配额路由策略和已配置的负载均衡策略，再将整个会话固定到一个渠道。WebSocket 建立后不会在不同上游之间切换。
+
+上游握手返回 HTTP 状态码时，会交给所选渠道的 API Key 自动禁用规则处理。使用 `priority` 密钥策略时，匹配规则而被禁用的凭证会让后续建连选择下一个可用密钥。Realtime 的 `circuit-breaker` 策略会记录上游握手失败、失败响应和已完成响应，供后续渠道选路使用。
+
+现有启动数据迁移流程会在渠道缓存加载之前，把历史 `endpoints` 中的 Realtime 配置搬到 `settings.realtime`。每个渠道的配置搬迁与旧条目清理原子完成，保留普通端点及其他设置。已有渠道级 Realtime 设置优先，包括显式禁用状态；重复执行不再写入渠道。该迁移只改变 JSON 配置结构，不新增数据库表或列。
+
+备份恢复使用同一转换逻辑处理合法的历史端点。启动时，无法转换的旧配置会保留原记录并记录警告，旧端点不会启用。恢复备份时，若其中包含无法转换的 Realtime 配置，恢复会拒绝写入并返回错误。
+
+迁移遵循现有数据库自动迁移开关；若已关闭，需要先受控启用迁移启动一次，再开放迁移后的 Realtime 渠道。混合版本发布时先排空 Realtime 流量，完成全部实例升级后再开放，旧二进制不能读取新的渠道配置。
 
 ## 了解用量、价格与配额
 

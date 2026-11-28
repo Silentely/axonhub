@@ -1,36 +1,10 @@
-# Realtime API Guide
+# Realtime API Reference
+
+## Overview
 
 AxonHub provides a WebSocket API for OpenAI Realtime GA clients and a separate native Qwen Realtime endpoint. Use this guide to configure a provider channel, choose the client endpoint and understand connection limits, usage and billing.
 
-## Configure a Realtime channel
-
-1. Use the existing `openai` or `bailian` channel and its credential manager.
-2. In the channel's main form, select `openai/realtime-ws` for OpenAI or `qwen/realtime-ws` for Bailian. The channel stores this independently in `settings.realtime`: `enabled`, `protocol`, `baseURL`, `path`, optional `handshakeTimeoutMs`, and optional `clientEventsPerSecond`. Set a 1000–60000 ms handshake timeout or leave it empty to inherit the server setting. The event-rate override accepts 256–4096 client events per second. Leave it empty to inherit the server default of 1024. When Realtime is selected, enter its WSS host in the existing **Base URL** field. AxonHub stores it in `settings.realtime.baseURL` while keeping the channel's HTTP Base URL.
-3. For OpenAI, enter `wss://api.openai.com` or `wss://api.openai.com/v1` as the **Base URL**. Both resolve to the same upstream address. The supported models include `gpt-realtime-2.1` and `gpt-realtime-2.1-mini`.
-4. When you select Qwen Realtime without a configured address, the **Base URL** is prefilled with `wss://llm-<workspace-id>.cn-beijing.maas.aliyuncs.com`. Replace the example with the WSS address for your workspace from the Bailian console. You can append `/api-ws/v1` to the host. AxonHub connects to `/api-ws/v1/realtime`. Hosts are limited to `cn-beijing` and `ap-southeast-1` under `maas.aliyuncs.com`; preserve the console's host label, including an `llm-` prefix when present. Workspace, key and region must match. Supported models are `qwen3.8-omni-flash-realtime`, `qwen3.5-omni-plus-realtime` and `qwen3.5-omni-flash-realtime`.
-5. Configure the channel's supported-model whitelist, mappings, model associations and API Key Profile permissions. Realtime protocol selection belongs to the channel form, not endpoint management.
-6. Configure the independent realtime price items using the current official rate and the installation's currency. Do not substitute historical text-model price codes or mix USD and CNY.
-7. Channel testing verifies an actual WebSocket handshake, configuration acknowledgement and a lightweight conversation-item acknowledgement, without starting model generation. It does not certify audio or invoices.
-
-OpenAI also supports a custom WSS hostname. Standard sessions use `/v1/realtime` and translation uses `/v1/realtime/translations`. Use only the host and optional version prefix in the Base URL. Omit the full request path, query string, and fragment.
-
-Endpoint management does not offer Realtime protocols. Sending `openai/realtime-ws` or `qwen/realtime-ws` through `saveChannelEndpoints` or another endpoint-writing input is rejected with HTTP `422` and code `ENDPOINT_REALTIME_NOT_ALLOWED`; the server does not ignore or persist it. Set `settings.realtime.enabled` to `false`, or switch the main form to a non-Realtime protocol, to stop new Realtime sessions without deleting HTTP endpoints.
-
-Selecting Realtime makes the channel exclusive to realtime requests. Its HTTP base URL, custom endpoints, and model settings remain stored. Endpoint management indicates that the ordinary endpoints are inactive. Selecting an ordinary protocol restores its default and custom endpoints. Use separate channels when serving both ordinary and realtime traffic.
-
-Realtime channel configuration is available on the existing OpenAI and Bailian channel types. xAI Subscription channels use their provider-managed endpoint and reject custom Realtime endpoint input.
-
-At handshake time, AxonHub applies the API Key profile filters, model routing policy, quota-routing policy and configured load-balancing strategy, then pins the session to one channel for its lifetime. Realtime sessions do not move between providers after the WebSocket is established.
-
-Handshake failures with an upstream HTTP status are passed to the selected channel's API Key auto-disable rules. With the `priority` key strategy, disabling a matching credential lets later connections select the next enabled key. The Realtime `circuit-breaker` strategy records upstream handshake failures, failed responses and completed responses for later channel selection.
-
-The existing startup data-migration pipeline moves legacy Realtime entries from `endpoints` to `settings.realtime` before the channel cache loads. Each channel update moves the configuration and removes the legacy entries atomically, while preserving ordinary endpoints and unrelated settings. An existing channel-owned Realtime setting wins, including an explicit disabled setting. Re-running the migration makes no further channel writes. This changes the JSON configuration shape and adds no database table or column.
-
-Backup restore uses the same conversion for valid legacy endpoints. At startup, an invalid legacy configuration is left in place and logged, and its legacy endpoint stays inactive. A restore containing invalid Realtime configuration returns an error and rolls back.
-
-This follows the existing database auto-migration setting: if it is disabled, run a controlled startup with migration enabled before serving migrated Realtime channels. Drain Realtime traffic during a mixed-version deployment and finish upgrading all instances before reopening it; older binaries cannot read the new channel configuration.
-
-## Choose a client endpoint
+## Supported endpoints
 
 Connect to `GET /v1/realtime?model={gateway-model-or-alias}` using WebSocket Upgrade and `Authorization: Bearer {AxonHub API Key}`. The first release supports server clients only. Browser Origin headers, URL credentials and client-selected upstream hosts are rejected. Authentication never falls back to No-Auth.
 
@@ -45,7 +19,9 @@ The SDK Base URLs below point to the public AxonHub address, not the upstream Re
 | OpenAI Realtime GA | `wss://gateway.example/v1/realtime?model={model}` | If the SDK appends `/realtime`, use `https://gateway.example/v1`; if it appends `/v1/realtime`, use `https://gateway.example` | The client speaks OpenAI GA events; routing can reach OpenAI or convert a Qwen model to GA events |
 | Native Qwen Realtime | `wss://gateway.example/qwen/v1/realtime?model={model}` | If the SDK appends `/realtime`, use `https://gateway.example/qwen/v1`; if it appends `/v1/realtime`, use `https://gateway.example/qwen` | The client speaks native Qwen events and should route only to a Bailian Qwen upstream |
 
-Both entries use the AxonHub API key in an `Authorization: Bearer ...` header. If the client cannot preserve a Base URL path prefix, use a client that accepts a complete WebSocket URL and connect directly to the entry above.
+For speech-to-speech translation, connect to `GET /v1/realtime/translations?model=gpt-realtime-translate`. See [Configure OpenAI Realtime Translation](#configure-openai-realtime-translation) for the session events.
+
+The conversation endpoints use the AxonHub API key in an `Authorization: Bearer ...` header. If the client cannot preserve a Base URL path prefix, use a client that accepts a complete WebSocket URL and connect directly to the entry above.
 
 For OpenAI, valid GA events, extension fields and event order are forwarded without unnecessary JSON rewriting or resampling. No `OpenAI-Beta: realtime=v1` header is sent. When `session.created` contains the complete effective GA audio configuration, its confirmed defaults can be used directly. Configuration changes require `session.update` and its `session.updated` acknowledgement before using the new parameters. Session model changes, credential overrides and caller-supplied safety identity are prohibited. The upstream Safety Identifier is a one-way digest derived from the authenticated Gateway key and user/project identity.
 
@@ -83,6 +59,34 @@ ws.on('message', (bytes) => {
 ```
 
 For native Qwen, use the Qwen route and `session.modalities: ['text']`, `session.turn_detection: null`, without GA `session.type`. Native text events remain `response.text.delta/done`.
+
+## Configure a Realtime channel
+
+1. Use the existing `openai` or `bailian` channel and its credential manager.
+2. In the channel's main form, select `openai/realtime-ws` for OpenAI or `qwen/realtime-ws` for Bailian. The channel stores this independently in `settings.realtime`: `enabled`, `protocol`, `baseURL`, `path`, optional `handshakeTimeoutMs`, and optional `clientEventsPerSecond`. Set a 1000–60000 ms handshake timeout or leave it empty to inherit the server setting. The event-rate override accepts 256–4096 client events per second. Leave it empty to inherit the server default of 1024. When Realtime is selected, enter its WSS host in the existing **Base URL** field. AxonHub stores it in `settings.realtime.baseURL` while keeping the channel's HTTP Base URL.
+3. For OpenAI, enter `wss://api.openai.com` or `wss://api.openai.com/v1` as the **Base URL**. Both resolve to the same upstream address. The supported models include `gpt-realtime-2.1` and `gpt-realtime-2.1-mini`.
+4. When you select Qwen Realtime without a configured address, the **Base URL** is prefilled with `wss://llm-<workspace-id>.cn-beijing.maas.aliyuncs.com`. Replace the example with the WSS address for your workspace from the Bailian console. You can append `/api-ws/v1` to the host. AxonHub connects to `/api-ws/v1/realtime`. Hosts are limited to `cn-beijing` and `ap-southeast-1` under `maas.aliyuncs.com`; preserve the console's host label, including an `llm-` prefix when present. Workspace, key and region must match. Supported models are `qwen3.8-omni-flash-realtime`, `qwen3.5-omni-plus-realtime` and `qwen3.5-omni-flash-realtime`.
+5. Configure the channel's supported-model whitelist, mappings, model associations and API Key Profile permissions. Realtime protocol selection belongs to the channel form, not endpoint management.
+6. Configure the independent realtime price items using the current official rate and the installation's currency. Do not substitute historical text-model price codes or mix USD and CNY.
+7. Channel testing verifies an actual WebSocket handshake, configuration acknowledgement and a lightweight conversation-item acknowledgement, without starting model generation. It does not certify audio or invoices.
+
+OpenAI also supports a custom WSS hostname. Standard sessions use `/v1/realtime` and translation uses `/v1/realtime/translations`. Use only the host and optional version prefix in the Base URL. Omit the full request path, query string, and fragment.
+
+Endpoint management does not offer Realtime protocols. Sending `openai/realtime-ws` or `qwen/realtime-ws` through `saveChannelEndpoints` or another endpoint-writing input is rejected with HTTP `422` and code `ENDPOINT_REALTIME_NOT_ALLOWED`; the server does not ignore or persist it. Set `settings.realtime.enabled` to `false`, or switch the main form to a non-Realtime protocol, to stop new Realtime sessions without deleting HTTP endpoints.
+
+Selecting Realtime makes the channel exclusive to realtime requests. Its HTTP base URL, custom endpoints, and model settings remain stored. Endpoint management indicates that the ordinary endpoints are inactive. Selecting an ordinary protocol restores its default and custom endpoints. Use separate channels when serving both ordinary and realtime traffic.
+
+Realtime channel configuration is available on the existing OpenAI and Bailian channel types. xAI Subscription channels use their provider-managed endpoint and reject custom Realtime endpoint input.
+
+At handshake time, AxonHub applies the API Key profile filters, model routing policy, quota-routing policy and configured load-balancing strategy, then pins the session to one channel for its lifetime. Realtime sessions do not move between providers after the WebSocket is established.
+
+Handshake failures with an upstream HTTP status are passed to the selected channel's API Key auto-disable rules. With the `priority` key strategy, disabling a matching credential lets later connections select the next enabled key. The Realtime `circuit-breaker` strategy records upstream handshake failures, failed responses and completed responses for later channel selection.
+
+The existing startup data-migration pipeline moves legacy Realtime entries from `endpoints` to `settings.realtime` before the channel cache loads. Each channel update moves the configuration and removes the legacy entries atomically, while preserving ordinary endpoints and unrelated settings. An existing channel-owned Realtime setting wins, including an explicit disabled setting. Re-running the migration makes no further channel writes. This changes the JSON configuration shape and adds no database table or column.
+
+Backup restore uses the same conversion for valid legacy endpoints. At startup, an invalid legacy configuration is left in place and logged, and its legacy endpoint stays inactive. A restore containing invalid Realtime configuration returns an error and rolls back.
+
+This follows the existing database auto-migration setting: if it is disabled, run a controlled startup with migration enabled before serving migrated Realtime channels. Drain Realtime traffic during a mixed-version deployment and finish upgrading all instances before reopening it; older binaries cannot read the new channel configuration.
 
 ## Understand usage, pricing and quotas
 

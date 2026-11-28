@@ -240,7 +240,7 @@ AxonHubの動作画面をご覧ください：
 | **画像生成** | ✅ 完了 | 画像生成               | [Image Generation](docs/en/api-reference/image-generation.md) |
 | **リランク**           | ✅ 完了    | 結果のランキング                | [Rerank API](docs/en/api-reference/rerank-api.md) |
 | **エンベディング**        | ✅ 完了    | ベクトルエンベディング生成    | [Embedding API](docs/en/api-reference/embedding-api.md) |
-| **リアルタイム**         | ✅ 完了 | リアルタイム会話機能 | [Realtime ガイド（英語）](docs/en/guides/realtime.md) |
+| **リアルタイム**         | ✅ 完了 | リアルタイム会話機能 | [Realtime ガイド（英語）](docs/en/api-reference/realtime.md) |
 
 ---
 
